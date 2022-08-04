@@ -2,7 +2,12 @@
 Short description and motivation.
 
 ## Usage
-How to use my plugin.
+
+## Wait for an option to be selected by label:
+
+```ruby
+haya_select("class_school_id").wait_for_label("School")
+```
 
 ## Installation
 Add this line to your application's Gemfile:
