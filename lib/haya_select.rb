@@ -13,6 +13,8 @@ class HayaSelect
 
   def label
     wait_for_and_find("#{base_selector} .haya-select-current-selected .current-option").text
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def open
@@ -33,6 +35,8 @@ class HayaSelect
         value: option_element["data-value"]
       }
     end
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def wait_for_options(expected_options)
@@ -43,6 +47,8 @@ class HayaSelect
 
   def search(value)
     wait_for_and_find("#{base_selector} .haya-select-search-text-input").set(value)
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def select(label)
@@ -56,10 +62,14 @@ class HayaSelect
   def select_option(label:)
     wait_for_and_find("#{options_selector} .haya-select-option", exact_text: label).click
     self
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def value
     wait_for_and_find("#{base_selector} .haya-select-current-selected input[type='hidden']", visible: false)[:value]
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def wait_for_label(expected_label)
@@ -79,6 +89,8 @@ class HayaSelect
 
       expect(actual_toggles).to eq expected_toggles
     end
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def wait_for_value(expected_value)
