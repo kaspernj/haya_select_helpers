@@ -77,20 +77,22 @@ class HayaSelect
     self
   end
 
-  def wait_for_toggles(expected_toggles)
-    wait_for_expect do
-      actual_toggles = all(".haya-select-option-presentation").map do |element|
-        {
-          toggle_icon: element["data-toggle-icon"],
-          toggle_value: element["data-toggle-value"],
-          value: element["data-value"]
-        }
-      end
-
-      expect(actual_toggles).to eq expected_toggles
+  def toggles
+    all(".haya-select-option-presentation").map do |element|
+      {
+        toggle_icon: element["data-toggle-icon"],
+        toggle_value: element["data-toggle-value"],
+        value: element["data-value"]
+      }
     end
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
+  end
+
+  def wait_for_toggles(expected_toggles)
+    wait_for_expect do
+      expect(toggles).to eq expected_toggles
+    end
   end
 
   def wait_for_value(expected_value)
