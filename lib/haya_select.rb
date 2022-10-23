@@ -78,7 +78,7 @@ class HayaSelect
   end
 
   def toggles
-    all(".haya-select-option-presentation").map do |element|
+    all("#{base_selector} .haya-select-option-presentation").map do |element|
       {
         toggle_icon: element["data-toggle-icon"],
         toggle_value: element["data-toggle-value"],
