@@ -60,7 +60,11 @@ class HayaSelect
   end
 
   def select_option(label:)
-    wait_for_and_find("#{options_selector} .haya-select-option", exact_text: label).click
+    option = wait_for_and_find("#{options_selector} .haya-select-option", exact_text: label)
+
+    raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
+
+    option.click
     self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
