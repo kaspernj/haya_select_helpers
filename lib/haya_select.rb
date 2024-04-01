@@ -5,8 +5,8 @@ class HayaSelect
 
   def initialize(id:, scope:)
     @base_selector = ".haya-select[data-id='#{id}']"
-    @not_opened_current_selected_selector = "#{base_selector} .haya-select-current-selected[data-opened='false']"
-    @opened_current_selected_selector = "#{base_selector} .haya-select-current-selected[data-opened='true']"
+    @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] .haya-select-current-selected"
+    @opened_current_selected_selector = "#{base_selector}[data-opened='true'] .haya-select-current-selected"
     @options_selector = ".haya-select-options-container[data-id='#{id}']"
     @scope = scope
   end
@@ -18,7 +18,7 @@ class HayaSelect
   end
 
   def open
-    wait_for_and_find("#{base_selector} .haya-select-current-selected[data-opened='false']").click
+    wait_for_and_find("#{base_selector}[data-opened='false'] .haya-select-current-selected").click
     wait_for_selector opened_current_selected_selector
     wait_for_selector options_selector
     self
