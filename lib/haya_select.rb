@@ -43,10 +43,12 @@ class HayaSelect
     wait_for_expect do
       expect(options).to eq expected_options
     end
+    self
   end
 
   def search(value)
     wait_for_and_find("#{base_selector} .haya-select-search-text-input").set(value)
+    self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -97,6 +99,7 @@ class HayaSelect
     wait_for_expect do
       expect(toggles).to eq expected_toggles
     end
+    self
   end
 
   def wait_for_value(expected_value)
