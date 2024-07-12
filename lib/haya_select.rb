@@ -4,21 +4,21 @@ class HayaSelect
   delegate :all, :expect, :eq, :pretty_html, :wait_for_and_find, :wait_for_expect, :wait_for_no_selector, :wait_for_selector, to: :scope
 
   def initialize(id:, scope:)
-    @base_selector = ".haya-select[data-id='#{id}']"
-    @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] .haya-select-current-selected"
-    @opened_current_selected_selector = "#{base_selector}[data-opened='true'] .haya-select-current-selected"
-    @options_selector = ".haya-select-options-container[data-id='#{id}']"
+    @base_selector = "[data-component='haya-select'][data-id='#{id}']"
+    @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] [data-class='current-selected']"
+    @opened_current_selected_selector = "#{base_selector}[data-opened='true'] [data-class='current-selected']"
+    @options_selector = "[data-class='options-container'][data-id='#{id}']"
     @scope = scope
   end
 
   def label
-    wait_for_and_find("#{base_selector} .haya-select-current-selected .current-option").text
+    wait_for_and_find("#{base_selector} [data-class='current-selected'] [data-class='current-option']").text
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
 
   def open
-    wait_for_and_find("#{base_selector}[data-opened='false'] .haya-select-current-selected").click
+    wait_for_and_find("#{base_selector}[data-opened='false'] [data-class='current-selected']").click
     wait_for_selector opened_current_selected_selector
     wait_for_selector options_selector
     self
@@ -27,8 +27,8 @@ class HayaSelect
   end
 
   def options
-    wait_for_selector "#{options_selector} .haya-select-option"
-    option_elements = all("#{options_selector} .haya-select-option")
+    wait_for_selector "#{options_selector} [data-class='select-option']"
+    option_elements = all("#{options_selector} [data-class='select-option']")
     option_elements.map do |option_element|
       {
         label: option_element.text,
@@ -47,7 +47,7 @@ class HayaSelect
   end
 
   def search(value)
-    wait_for_and_find("#{base_selector} .haya-select-search-text-input").set(value)
+    wait_for_and_find("#{base_selector} [data-class='search-text-input']").set(value)
     self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -62,7 +62,7 @@ class HayaSelect
   end
 
   def select_option(label:)
-    option = wait_for_and_find("#{options_selector} .haya-select-option", exact_text: label)
+    option = wait_for_and_find("#{options_selector} [data-class='select-option']", exact_text: label)
 
     raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
 
@@ -73,18 +73,18 @@ class HayaSelect
   end
 
   def value
-    wait_for_and_find("#{base_selector} .haya-select-current-selected input[type='hidden']", visible: false)[:value]
+    wait_for_and_find("#{base_selector} [data-class='current-selected'] input[type='hidden']", visible: false)[:value]
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
 
   def wait_for_label(expected_label)
-    wait_for_selector "#{base_selector} .haya-select-current-selected .current-option", exact_text: expected_label
+    wait_for_selector "#{base_selector} [data-class='current-selected'] .current-option", exact_text: expected_label
     self
   end
 
   def toggles
-    all("#{base_selector} .haya-select-option-presentation").map do |element|
+    all("#{base_selector} [data-class='option-presentation']").map do |element|
       {
         toggle_icon: element["data-toggle-icon"],
         toggle_value: element["data-toggle-value"],
@@ -103,7 +103,7 @@ class HayaSelect
   end
 
   def wait_for_value(expected_value)
-    wait_for_selector "#{base_selector} .haya-select-current-selected input[type='hidden'][value='#{expected_value}']", visible: false
+    wait_for_selector "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{expected_value}']", visible: false
     self
   end
 end
