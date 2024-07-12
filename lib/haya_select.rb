@@ -79,7 +79,7 @@ class HayaSelect
   end
 
   def wait_for_label(expected_label)
-    wait_for_selector "#{base_selector} [data-class='current-selected'] .current-option", exact_text: expected_label
+    wait_for_selector "#{base_selector} [data-class='current-selected'] [data-class='current-option']", exact_text: expected_label
     self
   end
 
