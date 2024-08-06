@@ -95,6 +95,16 @@ class HayaSelect
     retry
   end
 
+  def selected_option_values
+    all("[data-class='select-option'][data-selected='true']").map { |select_option_element| select_option_element["data-value"] }
+  end
+
+  def wait_for_selected_option_values(values)
+    wait_for_expect do
+      expect(selected_option_values).to eq values
+    end
+  end
+
   def wait_for_toggles(expected_toggles)
     wait_for_expect do
       expect(toggles).to eq expected_toggles
