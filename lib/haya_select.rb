@@ -53,16 +53,23 @@ class HayaSelect
     retry
   end
 
-  def select(label)
+  def select(label = nil, value: nil)
     open
-    select_option(label: label)
+    select_option(label:, value:)
     wait_for_selector not_opened_current_selected_selector
     wait_for_no_selector options_selector
     self
   end
 
-  def select_option(label:)
-    option = wait_for_and_find("#{options_selector} [data-class='select-option']", exact_text: label)
+  def select_option(label: nil, value: nil)
+    raise "No 'label' or 'value' given" if label.nil? && value.nil?
+
+    selector = "#{options_selector} [data-class='select-option']"
+    args = {}
+    args[:exact_text] = label unless label.nil?
+    selector << "[data-value='#{value}']" unless value.nil?
+
+    option = wait_for_and_find(selector, **args)
 
     raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
 
