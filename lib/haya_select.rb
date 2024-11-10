@@ -64,12 +64,11 @@ class HayaSelect
   def select_option(label: nil, value: nil)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
-    selector = "#{options_selector} [data-class='select-option']"
-    args = {}
-    args[:exact_text] = label unless label.nil?
+    selector = "#{options_selector} [data-class='option-presentation']"
+    selector << "[data-text='#{label}']" unless label.nil?
     selector << "[data-value='#{value}']" unless value.nil?
 
-    option = wait_for_and_find(selector, **args)
+    option = wait_for_and_find(selector)
 
     raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
 
