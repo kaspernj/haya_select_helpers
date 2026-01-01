@@ -26,6 +26,12 @@ class HayaSelect
     retry
   end
 
+  def close
+    wait_for_selector opened_current_selected_selector
+    wait_for_and_find("[data-class='search-text-input']").click
+    wait_for_no_selector opened_current_selected_selector
+  end
+
   def options
     wait_for_selector "#{options_selector} [data-class='select-option']"
     option_elements = all("#{options_selector} [data-class='select-option']")
