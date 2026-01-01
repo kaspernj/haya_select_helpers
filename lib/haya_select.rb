@@ -64,7 +64,7 @@ class HayaSelect
   def select_option(label: nil, value: nil)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
-    selector = "#{options_selector} [data-class='option-presentation']"
+    selector = "#{options_selector} [data-testid='option-presentation']"
     selector << "[data-text='#{label}']" unless label.nil?
     selector << "[data-value='#{value}']" unless value.nil?
 
@@ -90,7 +90,7 @@ class HayaSelect
   end
 
   def toggles
-    all("#{base_selector} [data-class='option-presentation']").map do |element|
+    all("#{base_selector} [data-testid='option-presentation']").map do |element|
       {
         toggle_icon: element["data-toggle-icon"],
         toggle_value: element["data-toggle-value"],
