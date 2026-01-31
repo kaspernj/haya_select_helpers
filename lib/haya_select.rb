@@ -76,11 +76,19 @@ class HayaSelect
   end
 
   def select(label = nil, value: nil)
-    open
-    selected_value = select_option(label:, value:)
-    wait_for_selected_value_or_label(label, value || selected_value)
-    close_if_open
-    self
+    attempts = 0
+
+    begin
+      open
+      selected_value = select_option(label:, value:)
+      wait_for_selected_value_or_label(label, value || selected_value)
+      close_if_open
+      self
+    rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+      attempts += 1
+      retry if attempts < 3
+      raise
+    end
   end
 
   def select_option(label: nil, value: nil)
