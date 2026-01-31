@@ -161,14 +161,25 @@ private
   end
 
   def wait_for_option(selector, label)
-    search_for_option(label)
-    wait_for_browser do
-      scope.page.has_selector?(selector)
-    end
-  rescue WaitUtil::TimeoutError
-    raise unless label
+    return wait_for_browser { scope.page.has_selector?(selector) } unless label
 
-    search_for_option(label)
+    option_found = false
+
+    search_terms_for(label).each do |search_term|
+      search_for_option(search_term)
+
+      wait_for_browser do
+        scope.page.has_selector?(selector) || scope.page.has_selector?(no_options_selector)
+      end
+
+      if scope.page.has_selector?(selector)
+        option_found = true
+        break
+      end
+    end
+
+    return if option_found
+
     wait_for_browser do
       scope.page.has_selector?(selector)
     end
@@ -183,10 +194,15 @@ private
   end
 
   def search_for_option(label)
-    return unless label
     return unless scope.page.has_selector?(search_input_selector)
 
     search(label)
+  end
+
+  def search_terms_for(label)
+    terms = [label]
+    terms << label.split(" (", 2).first if label.include?(" (")
+    terms.uniq
   end
 
   def close_if_open
@@ -204,6 +220,10 @@ private
 
   def search_input_selector
     "#{base_selector} [data-class='search-text-input']"
+  end
+
+  def no_options_selector
+    "#{options_selector} [data-class='no-options-container']"
   end
 
   def select_container_selector
