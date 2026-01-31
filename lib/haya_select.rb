@@ -77,8 +77,8 @@ class HayaSelect
 
   def select(label = nil, value: nil)
     open
-    selected_value = select_option(label:, value:)
-    wait_for_selected_value_or_label(label, value || selected_value)
+    select_option(label:, value:)
+    wait_for_selected_value_or_label(label, value)
     close_if_open
     self
   end
@@ -92,9 +92,8 @@ class HayaSelect
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
-    option_value = option['data-value']
     option.click
-    option_value
+    self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -161,10 +160,23 @@ private
     selector
   end
 
+  # rubocop:disable Metrics/AbcSize
   def wait_for_option(selector, label)
     return wait_for_browser { scope.page.has_selector?(selector) } unless label
 
     option_found = false
+
+    option_found = true if scope.page.has_selector?(selector)
+
+    return if option_found
+
+    unless scope.page.has_selector?(search_input_selector)
+      wait_for_browser do
+        scope.page.has_selector?(selector)
+      end
+
+      return
+    end
 
     search_terms_for(label).each do |search_term|
       current_options_text = options_container_text
@@ -186,13 +198,11 @@ private
       scope.page.has_selector?(selector)
     end
   end
+  # rubocop:enable Metrics/AbcSize
 
   def wait_for_selected_value_or_label(label, value)
-    if value
-      wait_for_value(value)
-    elsif label
-      wait_for_label(label)
-    end
+    wait_for_label(label) if label
+    wait_for_value(value) if value
   end
 
   def search_for_option(label)
