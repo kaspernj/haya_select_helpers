@@ -34,7 +34,11 @@ class HayaSelect
   end
 
   def open
-    wait_for_and_find("#{base_selector}[data-opened='false'] [data-class='current-selected']").click
+    if scope.page.has_selector?(select_container_selector)
+      wait_for_and_find(select_container_selector).click
+    else
+      wait_for_and_find("#{base_selector}[data-opened='false'] [data-class='current-selected']").click
+    end
     wait_for_selector opened_current_selected_selector
     wait_for_selector options_selector
     self
