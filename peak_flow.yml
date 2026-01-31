@@ -1,0 +1,6 @@
+rvm: true
+builds:
+  rubocop:
+    name: Rubocop
+    script:
+      - bundle exec rubocop
