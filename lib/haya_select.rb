@@ -292,7 +292,18 @@ private
     return if scope.page.has_selector?(opened_current_selected_selector)
 
     scope.page.execute_script(
-      "arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}))",
+      <<~JS,
+        const target = arguments[0]
+        const events = [
+          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
+          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
+          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
+          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
+          new MouseEvent('click', {bubbles: true, cancelable: true})
+        ]
+
+        for (const event of events) target.dispatchEvent(event)
+      JS
       element
     )
   end
