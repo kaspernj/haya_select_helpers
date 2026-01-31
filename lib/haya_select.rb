@@ -287,6 +287,10 @@ private
       end
 
     element = wait_for_and_find(target_selector)
+    scope.page.execute_script(
+      "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
+      element
+    )
     element.click
 
     return if scope.page.has_selector?(opened_current_selected_selector)
