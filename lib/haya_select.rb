@@ -277,13 +277,24 @@ private
   end
 
   def click_open_target
-    if scope.page.has_selector?(select_container_selector)
-      wait_for_and_find(select_container_selector).click
-    elsif scope.page.has_selector?(current_selected_selector)
-      wait_for_and_find(current_selected_selector).click
-    else
-      wait_for_and_find(base_selector).click
-    end
+    target_selector =
+      if scope.page.has_selector?(select_container_selector)
+        select_container_selector
+      elsif scope.page.has_selector?(current_selected_selector)
+        current_selected_selector
+      else
+        base_selector
+      end
+
+    element = wait_for_and_find(target_selector)
+    element.click
+
+    return if scope.page.has_selector?(opened_current_selected_selector)
+
+    scope.page.execute_script(
+      "arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}))",
+      element
+    )
   end
 
   def current_selected_selector
