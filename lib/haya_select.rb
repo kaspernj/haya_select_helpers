@@ -34,16 +34,19 @@ class HayaSelect
   end
 
   def open
-    if scope.page.has_selector?(select_container_selector)
-      wait_for_and_find(select_container_selector).click
-    else
-      wait_for_and_find("#{base_selector}[data-opened='false'] [data-class='current-selected']").click
+    attempts = 0
+
+    begin
+      click_open_target
+      wait_for_browser do
+        scope.page.has_selector?(opened_current_selected_selector) && scope.page.has_selector?(options_selector)
+      end
+      self
+    rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+      attempts += 1
+      retry if attempts < 3
+      raise
     end
-    wait_for_selector opened_current_selected_selector
-    wait_for_selector options_selector
-    self
-  rescue Selenium::WebDriver::Error::StaleElementReferenceError
-    retry
   end
 
   def close
@@ -272,6 +275,20 @@ private
 
   def search_input_selector
     "#{base_selector} [data-class='search-text-input']"
+  end
+
+  def click_open_target
+    if scope.page.has_selector?(select_container_selector)
+      wait_for_and_find(select_container_selector).click
+    elsif scope.page.has_selector?(current_selected_selector)
+      wait_for_and_find(current_selected_selector).click
+    else
+      wait_for_and_find(base_selector).click
+    end
+  end
+
+  def current_selected_selector
+    "#{base_selector} [data-class='current-selected']"
   end
 
   def current_option_selector(label)
