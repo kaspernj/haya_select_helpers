@@ -123,7 +123,7 @@ class HayaSelect
 
   def wait_for_label(expected_label)
     wait_for_selector(
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
+      current_option_label_selector,
       exact_text: expected_label
     )
     self
@@ -219,7 +219,7 @@ private
 
   def wait_for_selected_value_or_label(label, value)
     wait_for_expect do
-      label_matches = label && scope.page.has_selector?(current_option_selector(label))
+      label_matches = label && scope.page.has_selector?(current_option_label_selector, exact_text: label)
       value_matches = value && scope.page.has_selector?(current_value_selector(value))
 
       expect(label_matches || value_matches).to eq true
@@ -229,7 +229,7 @@ private
   def selected?(label, value)
     return false unless label || value
 
-    label_matches = label && scope.page.has_selector?(current_option_selector(label))
+    label_matches = label && scope.page.has_selector?(current_option_label_selector, exact_text: label)
     value_matches = value && scope.page.has_selector?(current_value_selector(value))
 
     label_matches || value_matches
@@ -348,8 +348,8 @@ private
     )
   end
 
-  def current_option_selector(label)
-    "#{base_selector} [data-class='current-selected'] [data-class='current-option'][data-text='#{label}']"
+  def current_option_label_selector
+    "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']"
   end
 
   def current_value_selector(value)
