@@ -78,8 +78,8 @@ class HayaSelect
   def select(label = nil, value: nil)
     open
     select_option(label:, value:)
-    wait_for_selector not_opened_current_selected_selector
-    wait_for_no_selector options_selector
+    wait_for_selected_value_or_label(label, value)
+    close_if_open
     self
   end
 
@@ -161,16 +161,53 @@ private
   end
 
   def wait_for_option(selector, label)
+    search_for_option(label)
     wait_for_browser do
       scope.page.has_selector?(selector)
     end
   rescue WaitUtil::TimeoutError
     raise unless label
 
-    search(label)
+    search_for_option(label)
     wait_for_browser do
       scope.page.has_selector?(selector)
     end
+  end
+
+  def wait_for_selected_value_or_label(label, value)
+    if value
+      wait_for_value(value)
+    elsif label
+      wait_for_label(label)
+    end
+  end
+
+  def search_for_option(label)
+    return unless label
+    return unless scope.page.has_selector?(search_input_selector)
+
+    search(label)
+  end
+
+  def close_if_open
+    return if scope.page.has_no_selector?(options_selector)
+
+    if scope.page.has_selector?(select_container_selector)
+      wait_for_and_find(select_container_selector).click
+    else
+      wait_for_and_find("body").click
+    end
+
+    wait_for_no_selector options_selector
+    wait_for_selector not_opened_current_selected_selector
+  end
+
+  def search_input_selector
+    "#{base_selector} [data-class='search-text-input']"
+  end
+
+  def select_container_selector
+    "#{base_selector} [data-class='select-container']"
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
