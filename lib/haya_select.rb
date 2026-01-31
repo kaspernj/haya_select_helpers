@@ -1,7 +1,7 @@
 class HayaSelect
   attr_reader :base_selector, :not_opened_current_selected_selector, :opened_current_selected_selector, :options_selector, :scope
 
-  delegate :all, :expect, :eq, :pretty_html, :wait_for_and_find, :wait_for_expect, :wait_for_no_selector, :wait_for_selector, to: :scope
+  delegate :all, :expect, :eq, :pretty_html, :wait_for_and_find, :wait_for_browser, :wait_for_expect, :wait_for_no_selector, :wait_for_selector, to: :scope
 
   def initialize(id:, scope:)
     @base_selector = "[data-component='haya-select'][data-id='#{id}']"
@@ -74,6 +74,7 @@ class HayaSelect
     selector << "[data-text='#{label}']" unless label.nil?
     selector << "[data-value='#{value}']" unless value.nil?
 
+    wait_for_option(selector, label)
     option = wait_for_and_find(selector)
 
     raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
@@ -127,5 +128,20 @@ class HayaSelect
   def wait_for_value(expected_value)
     wait_for_selector "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{expected_value}']", visible: false
     self
+  end
+
+  private
+
+  def wait_for_option(selector, label)
+    wait_for_browser do
+      scope.page.has_selector?(selector)
+    end
+  rescue WaitUtil::TimeoutError
+    raise unless label
+
+    search(label)
+    wait_for_browser do
+      scope.page.has_selector?(selector)
+    end
   end
 end
