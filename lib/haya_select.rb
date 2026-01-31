@@ -38,12 +38,11 @@ class HayaSelect
 
     begin
       click_open_target
-      wait_for_browser do
-        scope.page.has_selector?(opened_current_selected_selector) && scope.page.has_selector?(options_selector)
-      end
+      wait_for_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
+      send_open_key
       retry if attempts < 3
       raise
     end
@@ -289,6 +288,20 @@ private
 
   def current_selected_selector
     "#{base_selector} [data-class='current-selected']"
+  end
+
+  def wait_for_open
+    wait_for_browser do
+      scope.page.has_selector?(opened_current_selected_selector) && scope.page.has_selector?(options_selector)
+    end
+  end
+
+  def send_open_key
+    return unless scope.page.has_selector?(select_container_selector)
+
+    select_container = wait_for_and_find(select_container_selector)
+    select_container.send_keys(:enter)
+    select_container.send_keys(:space)
   end
 
   def current_option_selector(label)
