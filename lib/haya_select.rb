@@ -2,7 +2,6 @@
 
 # rubocop:disable Metrics/ClassLength, Style/Documentation
 class HayaSelect
-  # rubocop:disable Layout/ArgumentAlignment
   attr_reader :base_selector,
     :not_opened_current_selected_selector,
     :opened_current_selected_selector,
@@ -19,7 +18,6 @@ class HayaSelect
     :wait_for_no_selector,
     :wait_for_selector,
     to: :scope
-  # rubocop:enable Layout/ArgumentAlignment
 
   def initialize(id:, scope:)
     @base_selector = "[data-component='haya-select'][data-id='#{id}']"
