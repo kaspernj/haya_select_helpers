@@ -78,8 +78,8 @@ class HayaSelect
   def select(label = nil, value: nil)
     open
     select_option(label:, value:)
-    wait_for_selector not_opened_current_selected_selector
-    wait_for_no_selector options_selector
+    wait_for_selected_value_or_label(label, value)
+    close_if_open
     self
   end
 
@@ -161,16 +161,100 @@ private
   end
 
   def wait_for_option(selector, label)
+    return wait_for_browser { scope.page.has_selector?(selector) } unless label
+
+    option_found = false
+
+    search_terms_for(label).each do |search_term|
+      current_options_text = options_container_text
+      search_for_option(search_term)
+
+      wait_for_browser do
+        scope.page.has_selector?(selector) || options_container_updated?(search_term, current_options_text)
+      end
+
+      if scope.page.has_selector?(selector)
+        option_found = true
+        break
+      end
+    end
+
+    return if option_found
+
     wait_for_browser do
       scope.page.has_selector?(selector)
     end
-  rescue WaitUtil::TimeoutError
-    raise unless label
+  end
+
+  def wait_for_selected_value_or_label(label, value)
+    if value
+      wait_for_value(value)
+    elsif label
+      wait_for_label(label)
+    end
+  end
+
+  def search_for_option(label)
+    return unless scope.page.has_selector?(search_input_selector)
 
     search(label)
-    wait_for_browser do
-      scope.page.has_selector?(selector)
+  end
+
+  def options_container_updated?(search_term, previous_text)
+    return false unless scope.page.has_selector?(no_options_selector)
+    return false unless search_input_value == search_term
+    return false if previous_text.nil?
+
+    options_container_text != previous_text
+  end
+
+  def options_container_text
+    scope.page.find(options_selector).text
+  rescue Capybara::ElementNotFound
+    nil
+  end
+
+  def search_input_value
+    scope.page.find(search_input_selector).value
+  rescue Capybara::ElementNotFound
+    nil
+  end
+
+  def search_terms_for(label)
+    terms = [label]
+    terms << label.split(" (", 2).first if label.include?(" (")
+    terms.uniq
+  end
+
+  def close_if_open
+    return if scope.page.has_no_selector?(options_selector)
+
+    close_attempts = 0
+
+    while scope.page.has_selector?(options_selector) && close_attempts < 3
+      if scope.page.has_selector?(select_container_selector)
+        wait_for_and_find(select_container_selector).click
+      else
+        wait_for_and_find("body").click
+      end
+
+      close_attempts += 1
     end
+
+    wait_for_no_selector options_selector
+    wait_for_selector not_opened_current_selected_selector
+  end
+
+  def search_input_selector
+    "#{base_selector} [data-class='search-text-input']"
+  end
+
+  def no_options_selector
+    "#{options_selector} [data-class='no-options-container']"
+  end
+
+  def select_container_selector
+    "#{base_selector} [data-class='select-container']"
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
