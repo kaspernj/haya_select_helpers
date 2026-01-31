@@ -85,6 +85,8 @@ class HayaSelect
     attempts = 0
 
     begin
+      return self if selected?(label, value)
+
       open
       selected_value = select_option(label:, value:)
       wait_for_selected_value_or_label(label, value || selected_value)
@@ -222,6 +224,17 @@ private
 
       expect(label_matches || value_matches).to eq true
     end
+  end
+
+  def selected?(label, value)
+    return false unless label || value
+
+    label_matches = label && scope.page.has_selector?(current_option_selector(label))
+    value_matches = value && scope.page.has_selector?(current_value_selector(value))
+
+    label_matches || value_matches
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def search_for_option(label)
