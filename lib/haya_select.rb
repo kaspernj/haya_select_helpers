@@ -77,8 +77,8 @@ class HayaSelect
 
   def select(label = nil, value: nil)
     open
-    select_option(label:, value:)
-    wait_for_selected_value_or_label(label, value)
+    selected_value = select_option(label:, value:)
+    wait_for_selected_value_or_label(label, value || selected_value)
     close_if_open
     self
   end
@@ -92,8 +92,9 @@ class HayaSelect
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
+    option_value = option['data-value']
     option.click
-    self
+    option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -240,9 +241,6 @@ private
 
       close_attempts += 1
     end
-
-    wait_for_no_selector options_selector
-    wait_for_selector not_opened_current_selected_selector
   end
 
   def search_input_selector
