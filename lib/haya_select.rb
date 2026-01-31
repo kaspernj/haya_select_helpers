@@ -287,6 +287,7 @@ private
       end
 
     element = wait_for_and_find(target_selector)
+    scope.page.execute_script("arguments[0].focus()", element)
     scope.page.execute_script(
       "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
       element
@@ -295,21 +296,7 @@ private
 
     return if scope.page.has_selector?(opened_current_selected_selector)
 
-    scope.page.execute_script(
-      <<~JS,
-        const target = arguments[0]
-        const events = [
-          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
-          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
-          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
-          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
-          new MouseEvent('click', {bubbles: true, cancelable: true})
-        ]
-
-        for (const event of events) target.dispatchEvent(event)
-      JS
-      element
-    )
+    dispatch_open_events(element)
   end
 
   def current_selected_selector
@@ -328,6 +315,24 @@ private
     select_container = wait_for_and_find(select_container_selector)
     select_container.send_keys(:enter)
     select_container.send_keys(:space)
+  end
+
+  def dispatch_open_events(element)
+    scope.page.execute_script(
+      <<~JS,
+        const target = arguments[0]
+        const events = [
+          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
+          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
+          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
+          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
+          new MouseEvent('click', {bubbles: true, cancelable: true})
+        ]
+
+        for (const event of events) target.dispatchEvent(event)
+      JS
+      element
+    )
   end
 
   def current_option_selector(label)
