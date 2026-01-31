@@ -10,3 +10,11 @@ gem "sprockets-rails"
 
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"
+
+gem "rubocop", "~> 1.84"
+gem "rubocop-capybara", "~> 2.21"
+gem "rubocop-factory_bot", "~> 2.26"
+gem "rubocop-performance", "~> 1.24"
+gem "rubocop-rails", "~> 2.29"
+gem "rubocop-rspec", "~> 3.6"
+gem "rubocop-rspec_rails", "~> 2.30"

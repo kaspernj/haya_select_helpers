@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name        = "haya_select_helpers"
   spec.version     = HayaSelectHelpers::VERSION
   spec.authors     = ["kaspernj"]
-  spec.email       = ["k@spernj.org"]
+  spec.email       = ["kasper@diestoeckels.de"]
   spec.homepage    = "https://github.com/kaspernj/haya_select_helpers"
   spec.summary     = "RSpec helpers for HayaSelect."
   spec.description = "RSpec helpers for HayaSelect."
