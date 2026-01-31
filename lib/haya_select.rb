@@ -151,7 +151,7 @@ class HayaSelect
     self
   end
 
-  private
+private
 
   def select_option_selector(label:, value:)
     selector = "#{options_selector} [data-testid='option-presentation']"
