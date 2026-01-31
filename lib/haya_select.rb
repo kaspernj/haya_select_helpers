@@ -166,10 +166,11 @@ private
     option_found = false
 
     search_terms_for(label).each do |search_term|
+      current_options_text = options_container_text
       search_for_option(search_term)
 
       wait_for_browser do
-        scope.page.has_selector?(selector) || scope.page.has_selector?(no_options_selector)
+        scope.page.has_selector?(selector) || options_container_updated?(search_term, current_options_text)
       end
 
       if scope.page.has_selector?(selector)
@@ -199,6 +200,26 @@ private
     search(label)
   end
 
+  def options_container_updated?(search_term, previous_text)
+    return false unless scope.page.has_selector?(no_options_selector)
+    return false unless search_input_value == search_term
+    return false if previous_text.nil?
+
+    options_container_text != previous_text
+  end
+
+  def options_container_text
+    scope.page.find(options_selector).text
+  rescue Capybara::ElementNotFound
+    nil
+  end
+
+  def search_input_value
+    scope.page.find(search_input_selector).value
+  rescue Capybara::ElementNotFound
+    nil
+  end
+
   def search_terms_for(label)
     terms = [label]
     terms << label.split(" (", 2).first if label.include?(" (")
@@ -208,10 +229,16 @@ private
   def close_if_open
     return if scope.page.has_no_selector?(options_selector)
 
-    if scope.page.has_selector?(select_container_selector)
-      wait_for_and_find(select_container_selector).click
-    else
-      wait_for_and_find("body").click
+    close_attempts = 0
+
+    while scope.page.has_selector?(options_selector) && close_attempts < 3
+      if scope.page.has_selector?(select_container_selector)
+        wait_for_and_find(select_container_selector).click
+      else
+        wait_for_and_find("body").click
+      end
+
+      close_attempts += 1
     end
 
     wait_for_no_selector options_selector
