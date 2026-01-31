@@ -1,23 +1,7 @@
-# frozen_string_literal: true
-
-# rubocop:disable Metrics/ClassLength, Style/Documentation
 class HayaSelect
-  attr_reader :base_selector,
-              :not_opened_current_selected_selector,
-              :opened_current_selected_selector,
-              :options_selector,
-              :scope
+  attr_reader :base_selector, :not_opened_current_selected_selector, :opened_current_selected_selector, :options_selector, :scope
 
-  delegate :all,
-           :expect,
-           :eq,
-           :pretty_html,
-           :wait_for_and_find,
-           :wait_for_browser,
-           :wait_for_expect,
-           :wait_for_no_selector,
-           :wait_for_selector,
-           to: :scope
+  delegate :all, :expect, :eq, :pretty_html, :wait_for_and_find, :wait_for_browser, :wait_for_expect, :wait_for_no_selector, :wait_for_selector, to: :scope
 
   def initialize(id:, scope:)
     @base_selector = "[data-component='haya-select'][data-id='#{id}']"
@@ -54,7 +38,7 @@ class HayaSelect
     option_elements.map do |option_element|
       {
         label: option_element.text,
-        value: option_element['data-value']
+        value: option_element["data-value"]
       }
     end
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -86,11 +70,14 @@ class HayaSelect
   def select_option(label: nil, value: nil)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
-    selector = select_option_selector(label: label, value: value)
+    selector = "#{options_selector} [data-testid='option-presentation']"
+    selector << "[data-text='#{label}']" unless label.nil?
+    selector << "[data-value='#{value}']" unless value.nil?
+
     wait_for_option(selector, label)
     option = wait_for_and_find(selector)
 
-    raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
+    raise "The '#{label}'-option is disabled" if option["data-disabled"] == "true"
 
     option.click
     self
@@ -105,19 +92,16 @@ class HayaSelect
   end
 
   def wait_for_label(expected_label)
-    wait_for_selector(
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
-      exact_text: expected_label
-    )
+    wait_for_selector "#{base_selector} [data-class='current-selected'] [data-class='current-option']", exact_text: expected_label
     self
   end
 
   def toggles
     all("#{base_selector} [data-testid='option-presentation']").map do |element|
       {
-        toggle_icon: element['data-toggle-icon'],
-        toggle_value: element['data-toggle-value'],
-        value: element['data-value']
+        toggle_icon: element["data-toggle-icon"],
+        toggle_value: element["data-toggle-value"],
+        value: element["data-value"]
       }
     end
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -125,9 +109,7 @@ class HayaSelect
   end
 
   def selected_option_values
-    all("[data-class='select-option'][data-selected='true']").map do |select_option_element|
-      select_option_element['data-value']
-    end
+    all("[data-class='select-option'][data-selected='true']").map { |select_option_element| select_option_element["data-value"] }
   end
 
   def wait_for_selected_option_values(values)
@@ -144,21 +126,11 @@ class HayaSelect
   end
 
   def wait_for_value(expected_value)
-    wait_for_selector(
-      "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{expected_value}']",
-      visible: false
-    )
+    wait_for_selector "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{expected_value}']", visible: false
     self
   end
 
   private
-
-  def select_option_selector(label:, value:)
-    selector = "#{options_selector} [data-testid='option-presentation']"
-    selector << "[data-text='#{label}']" unless label.nil?
-    selector << "[data-value='#{value}']" unless value.nil?
-    selector
-  end
 
   def wait_for_option(selector, label)
     wait_for_browser do
@@ -172,6 +144,4 @@ class HayaSelect
       scope.page.has_selector?(selector)
     end
   end
-
-  # rubocop:enable Metrics/ClassLength, Style/Documentation
 end

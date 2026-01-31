@@ -78,7 +78,6 @@ GEM
       minitest (>= 5.1)
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
-    ast (2.4.3)
     base64 (0.2.0)
     benchmark (0.4.0)
     bigdecimal (3.1.9)
@@ -101,9 +100,6 @@ GEM
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.18.0)
-    language_server-protocol (3.17.0.5)
-    lint_roller (1.1.0)
     logger (1.6.4)
     loofah (2.23.1)
       crass (~> 1.0.2)
@@ -131,14 +127,9 @@ GEM
     nokogiri (1.18.10)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
-    parallel (1.27.0)
-    parser (3.3.10.1)
-      ast (~> 2.4.1)
-      racc
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
-    prism (1.9.0)
     psych (5.3.1)
       date
       stringio
@@ -179,30 +170,13 @@ GEM
       rake (>= 12.2)
       thor (~> 1.0, >= 1.2.2)
       zeitwerk (~> 2.6)
-    rainbow (3.1.1)
     rake (13.3.1)
     rdoc (7.0.3)
       erb
       psych (>= 4.0.0)
       tsort
-    regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
-    rubocop (1.84.0)
-      json (~> 2.3)
-      language_server-protocol (~> 3.17.0.2)
-      lint_roller (~> 1.1.0)
-      parallel (~> 1.10)
-      parser (>= 3.3.0.2)
-      rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 2.9.3, < 3.0)
-      rubocop-ast (>= 1.49.0, < 2.0)
-      ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.49.0)
-      parser (>= 3.3.7.2)
-      prism (~> 1.7)
-    ruby-progressbar (1.13.0)
     securerandom (0.4.1)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
@@ -219,9 +193,6 @@ GEM
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
-    unicode-display_width (3.2.0)
-      unicode-emoji (~> 4.1)
-    unicode-emoji (4.2.0)
     useragent (0.16.11)
     websocket-driver (0.8.0)
       base64
@@ -234,7 +205,6 @@ PLATFORMS
 
 DEPENDENCIES
   haya_select_helpers!
-  rubocop (~> 1.84)
   sprockets-rails
   sqlite3
 
