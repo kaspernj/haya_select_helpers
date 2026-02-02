@@ -376,7 +376,7 @@ private
 
   def option_present?(selector, label)
     scope.page.has_selector?(selector) ||
-      scope.page.has_selector?(option_label_selector, exact_text: label)
+      scope.page.has_selector?(option_label_selector, text: label)
   end
 
   def find_option_element(selector, label)
@@ -384,7 +384,7 @@ private
 
     return wait_for_and_find(selector) if scope.page.has_selector?(selector)
 
-    option_text = wait_for_and_find(option_label_selector, exact_text: label)
+    option_text = wait_for_and_find(option_label_selector, text: label)
     option_text.find(:xpath, "./ancestor::*[@data-testid='option-presentation']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
