@@ -88,7 +88,7 @@ class HayaSelect
       return self if selected?(label, value)
 
       open
-      selected_value = select_option(label:, value:)
+      selected_value = select_option_value(label:, value:)
       wait_for_selected_value_or_label(label, value || selected_value)
       close_if_open
       self
@@ -100,6 +100,13 @@ class HayaSelect
   end
 
   def select_option(label: nil, value: nil)
+    select_option_value(label: label, value: value)
+    self
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
+  end
+
+  def select_option_value(label: nil, value: nil)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
@@ -122,10 +129,9 @@ class HayaSelect
   end
 
   def wait_for_label(expected_label)
-    wait_for_selector(
-      current_option_label_selector,
-      exact_text: expected_label
-    )
+    wait_for_expect do
+      expect(label_matches?(expected_label)).to eq true
+    end
     self
   end
 
@@ -219,7 +225,7 @@ private
 
   def wait_for_selected_value_or_label(label, value)
     wait_for_expect do
-      label_matches = label && scope.page.has_selector?(current_option_label_selector, exact_text: label)
+      label_matches = label && label_matches?(label)
       value_matches = value && scope.page.has_selector?(current_value_selector(value))
 
       expect(label_matches || value_matches).to eq true
@@ -229,7 +235,7 @@ private
   def selected?(label, value)
     return false unless label || value
 
-    label_matches = label && scope.page.has_selector?(current_option_label_selector, exact_text: label)
+    label_matches = label && label_matches?(label)
     value_matches = value && scope.page.has_selector?(current_value_selector(value))
 
     label_matches || value_matches
@@ -348,8 +354,17 @@ private
     )
   end
 
-  def current_option_label_selector
-    "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']"
+  def current_option_label_selectors
+    [
+      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']",
+      "#{base_selector} [data-class='current-selected'] [data-class='current-option']"
+    ]
+  end
+
+  def label_matches?(label)
+    current_option_label_selectors.any? do |selector|
+      scope.page.has_selector?(selector, exact_text: label)
+    end
   end
 
   def current_value_selector(value)
