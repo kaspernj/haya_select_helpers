@@ -314,7 +314,8 @@ private
 
   def wait_for_open
     wait_for_browser do
-      scope.page.has_selector?(opened_current_selected_selector) && scope.page.has_selector?(options_selector)
+      scope.page.has_selector?(opened_current_selected_selector) ||
+        scope.page.has_selector?(options_selector)
     end
   end
 
