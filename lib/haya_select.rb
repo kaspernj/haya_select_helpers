@@ -85,8 +85,6 @@ class HayaSelect
     attempts = 0
 
     begin
-      return self if selected?(label, value)
-
       open
       selected_value = select_option_value(label:, value:)
       wait_for_selected_value_or_label(label, value || selected_value)
