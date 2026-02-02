@@ -85,10 +85,12 @@ class HayaSelect
     attempts = 0
 
     begin
+      previous_value = value
       open
       selected_value = select_option_value(label:, value:)
       selected_value = "" if selected_value.nil? && value.nil?
-      wait_for_selected_value_or_label(label, value || selected_value)
+      allow_blank = previous_value == selected_value
+      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       close_if_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -213,12 +215,13 @@ private
   end
   # rubocop:enable Metrics/AbcSize
 
-  def wait_for_selected_value_or_label(label, value)
+  def wait_for_selected_value_or_label(label, value, allow_blank: false)
     wait_for_expect do
       label_matches = label && label_matches?(label)
-      value_matches = value && scope.page.has_selector?(current_value_selector(value))
+      value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
+      blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false)
 
-      expect(label_matches || value_matches).to eq true
+      expect(label_matches || value_matches || blank_matches).to eq true
     end
   end
 
@@ -226,7 +229,7 @@ private
     return false unless label || value
 
     label_matches = label && label_matches?(label)
-    value_matches = value && scope.page.has_selector?(current_value_selector(value))
+    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
 
     label_matches || value_matches
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
