@@ -87,6 +87,7 @@ class HayaSelect
     begin
       open
       selected_value = select_option_value(label:, value:)
+      selected_value = "" if selected_value.nil? && value.nil?
       wait_for_selected_value_or_label(label, value || selected_value)
       close_if_open
       self
