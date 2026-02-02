@@ -110,7 +110,7 @@ class HayaSelect
 
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
-    option = wait_for_and_find(selector)
+    option = find_option_element(selector, label)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
@@ -186,15 +186,11 @@ private
   def wait_for_option(selector, label)
     return wait_for_browser { scope.page.has_selector?(selector) } unless label
 
-    option_found = false
-
-    option_found = true if scope.page.has_selector?(selector)
-
-    return if option_found
+    return if option_present?(selector, label)
 
     unless scope.page.has_selector?(search_input_selector)
       wait_for_browser do
-        scope.page.has_selector?(selector)
+        option_present?(selector, label)
       end
 
       return
@@ -205,19 +201,14 @@ private
       search_for_option(search_term)
 
       wait_for_browser do
-        scope.page.has_selector?(selector) || options_container_updated?(search_term, current_options_text)
+        option_present?(selector, label) || options_container_updated?(search_term, current_options_text)
       end
 
-      if scope.page.has_selector?(selector)
-        option_found = true
-        break
-      end
+      break if option_present?(selector, label)
     end
 
-    return if option_found
-
     wait_for_browser do
-      scope.page.has_selector?(selector)
+      option_present?(selector, label)
     end
   end
   # rubocop:enable Metrics/AbcSize
@@ -376,6 +367,26 @@ private
 
   def select_container_selector
     "#{base_selector} [data-class='select-container']"
+  end
+
+  def option_label_selector
+    "#{options_selector} [data-testid='option-presentation-text']"
+  end
+
+  def option_present?(selector, label)
+    scope.page.has_selector?(selector) ||
+      scope.page.has_selector?(option_label_selector, exact_text: label)
+  end
+
+  def find_option_element(selector, label)
+    return wait_for_and_find(selector) unless label
+
+    return wait_for_and_find(selector) if scope.page.has_selector?(selector)
+
+    option_text = wait_for_and_find(option_label_selector, exact_text: label)
+    option_text.find(:xpath, "./ancestor::*[@data-testid='option-presentation']")
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
