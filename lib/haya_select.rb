@@ -85,9 +85,12 @@ class HayaSelect
     attempts = 0
 
     begin
+      previous_value = value
       open
-      selected_value = select_option(label:, value:)
-      wait_for_selected_value_or_label(label, value || selected_value)
+      selected_value = select_option_value(label:, value:)
+      selected_value = "" if selected_value.nil? && value.nil?
+      allow_blank = previous_value == selected_value
+      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       close_if_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -98,11 +101,18 @@ class HayaSelect
   end
 
   def select_option(label: nil, value: nil)
+    select_option_value(label: label, value: value)
+    self
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
+  end
+
+  def select_option_value(label: nil, value: nil)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
-    option = wait_for_and_find(selector)
+    option = find_option_element(selector, label)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
@@ -120,10 +130,9 @@ class HayaSelect
   end
 
   def wait_for_label(expected_label)
-    wait_for_selector(
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
-      exact_text: expected_label
-    )
+    wait_for_expect do
+      expect(label_matches?(expected_label)).to eq true
+    end
     self
   end
 
@@ -179,15 +188,11 @@ private
   def wait_for_option(selector, label)
     return wait_for_browser { scope.page.has_selector?(selector) } unless label
 
-    option_found = false
-
-    option_found = true if scope.page.has_selector?(selector)
-
-    return if option_found
+    return if option_present?(selector, label)
 
     unless scope.page.has_selector?(search_input_selector)
       wait_for_browser do
-        scope.page.has_selector?(selector)
+        option_present?(selector, label)
       end
 
       return
@@ -198,30 +203,37 @@ private
       search_for_option(search_term)
 
       wait_for_browser do
-        scope.page.has_selector?(selector) || options_container_updated?(search_term, current_options_text)
+        option_present?(selector, label) || options_container_updated?(search_term, current_options_text)
       end
 
-      if scope.page.has_selector?(selector)
-        option_found = true
-        break
-      end
+      break if option_present?(selector, label)
     end
 
-    return if option_found
-
     wait_for_browser do
-      scope.page.has_selector?(selector)
+      option_present?(selector, label)
     end
   end
   # rubocop:enable Metrics/AbcSize
 
-  def wait_for_selected_value_or_label(label, value)
+  def wait_for_selected_value_or_label(label, value, allow_blank: false)
     wait_for_expect do
-      label_matches = label && scope.page.has_selector?(current_option_selector(label))
-      value_matches = value && scope.page.has_selector?(current_value_selector(value))
+      label_matches = label && label_matches?(label)
+      value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
+      blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false)
 
-      expect(label_matches || value_matches).to eq true
+      expect(label_matches || value_matches || blank_matches).to eq true
     end
+  end
+
+  def selected?(label, value)
+    return false unless label || value
+
+    label_matches = label && label_matches?(label)
+    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
+
+    label_matches || value_matches
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   def search_for_option(label)
@@ -287,6 +299,7 @@ private
       end
 
     element = wait_for_and_find(target_selector)
+    scope.page.execute_script("arguments[0].focus()", element)
     scope.page.execute_script(
       "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
       element
@@ -295,6 +308,29 @@ private
 
     return if scope.page.has_selector?(opened_current_selected_selector)
 
+    dispatch_open_events(element)
+  end
+
+  def current_selected_selector
+    "#{base_selector} [data-class='current-selected']"
+  end
+
+  def wait_for_open
+    wait_for_browser do
+      scope.page.has_selector?(opened_current_selected_selector) ||
+        scope.page.has_selector?(options_selector)
+    end
+  end
+
+  def send_open_key
+    return unless scope.page.has_selector?(select_container_selector)
+
+    select_container = wait_for_and_find(select_container_selector)
+    select_container.send_keys(:enter)
+    select_container.send_keys(:space)
+  end
+
+  def dispatch_open_events(element)
     scope.page.execute_script(
       <<~JS,
         const target = arguments[0]
@@ -312,26 +348,17 @@ private
     )
   end
 
-  def current_selected_selector
-    "#{base_selector} [data-class='current-selected']"
+  def current_option_label_selectors
+    [
+      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']",
+      "#{base_selector} [data-class='current-selected'] [data-class='current-option']"
+    ]
   end
 
-  def wait_for_open
-    wait_for_browser do
-      scope.page.has_selector?(opened_current_selected_selector) && scope.page.has_selector?(options_selector)
+  def label_matches?(label)
+    current_option_label_selectors.any? do |selector|
+      scope.page.has_selector?(selector, exact_text: label)
     end
-  end
-
-  def send_open_key
-    return unless scope.page.has_selector?(select_container_selector)
-
-    select_container = wait_for_and_find(select_container_selector)
-    select_container.send_keys(:enter)
-    select_container.send_keys(:space)
-  end
-
-  def current_option_selector(label)
-    "#{base_selector} [data-class='current-selected'] [data-class='current-option'][data-text='#{label}']"
   end
 
   def current_value_selector(value)
@@ -344,6 +371,26 @@ private
 
   def select_container_selector
     "#{base_selector} [data-class='select-container']"
+  end
+
+  def option_label_selector
+    "#{options_selector} [data-testid='option-presentation-text']"
+  end
+
+  def option_present?(selector, label)
+    scope.page.has_selector?(selector) ||
+      scope.page.has_selector?(option_label_selector, text: label)
+  end
+
+  def find_option_element(selector, label)
+    return wait_for_and_find(selector) unless label
+
+    return wait_for_and_find(selector) if scope.page.has_selector?(selector)
+
+    option_text = wait_for_and_find(option_label_selector, text: label)
+    option_text.find(:xpath, "./ancestor::*[@data-testid='option-presentation']")
+  rescue Selenium::WebDriver::Error::StaleElementReferenceError
+    retry
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
