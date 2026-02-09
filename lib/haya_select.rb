@@ -357,6 +357,7 @@ private
     return unless scope.page.has_selector?(search_input_selector)
 
     search_input = wait_for_and_find(search_input_selector)
+    click_element_safely(search_input)
     search_input.send_keys(:escape)
     search_input.send_keys(:tab)
   end
