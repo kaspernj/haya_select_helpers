@@ -315,7 +315,7 @@ private
       "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
       element
     )
-    element.click
+    click_element_safely(element)
 
     return if scope.page.has_selector?(opened_current_selected_selector)
 
@@ -330,6 +330,12 @@ private
     wait_for_browser do
       scope.page.has_selector?(options_selector, visible: :all)
     end
+  end
+
+  def click_element_safely(element)
+    element.click
+  rescue Selenium::WebDriver::Error::ElementClickInterceptedError
+    scope.page.execute_script("arguments[0].click()", element)
   end
 
   def send_open_key
