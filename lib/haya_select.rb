@@ -196,6 +196,13 @@ private
 
     return if option_present?(selector, label)
 
+    if scope.page.has_selector?(options_selector, visible: :all)
+      wait_for_browser do
+        scope.page.has_selector?("#{options_selector} [data-class='select-option']", visible: :all) ||
+          scope.page.has_selector?(no_options_selector, visible: :all)
+      end
+    end
+
     wait_for_browser do
       option_present?(selector, label)
     end
