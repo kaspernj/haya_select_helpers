@@ -448,9 +448,7 @@ private
   end
 
   def option_click_target(option)
-    return option unless option.has_selector?("[data-testid='option-presentation']", visible: :all)
-
-    option.find("[data-testid='option-presentation']", visible: :all)
+    option
   end
 
   def click_target_element(click_target)
