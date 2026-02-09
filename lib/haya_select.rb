@@ -113,19 +113,12 @@ class HayaSelect
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
     option = find_option_element(selector, label)
+    click_target = option_click_target(option)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    if option.visible?
-      click_element_safely(option)
-    else
-      scope.page.execute_script(
-        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
-        option
-      )
-      scope.page.driver.browser.action.move_to(option.native).click.perform
-    end
+    click_target_element(click_target)
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -444,6 +437,24 @@ private
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
+  end
+
+  def option_click_target(option)
+    return option unless option.has_selector?("[data-testid='option-presentation']", visible: :all)
+
+    option.find("[data-testid='option-presentation']", visible: :all)
+  end
+
+  def click_target_element(click_target)
+    if click_target.visible?
+      click_element_safely(click_target)
+    else
+      scope.page.execute_script(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
+        click_target
+      )
+      scope.page.driver.browser.action.move_to(click_target.native).click.perform
+    end
   end
 
   def select_option_container_selector
