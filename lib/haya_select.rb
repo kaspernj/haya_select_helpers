@@ -292,6 +292,7 @@ private
     return if scope.page.has_no_selector?(options_selector, visible: :all)
 
     scope.page.execute_script("document.activeElement && document.activeElement.blur()")
+    send_escape
   end
 
   def search_input_selector
@@ -340,6 +341,12 @@ private
   def close_attempt
     close_search_input
     click_close_target
+    send_escape
+  end
+
+  def send_escape
+    scope.page.driver.browser.action.send_keys(:escape).perform
+  rescue Selenium::WebDriver::Error::InvalidElementStateError
     scope.page.find("body").send_keys(:escape)
   end
 
