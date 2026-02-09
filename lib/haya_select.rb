@@ -75,7 +75,9 @@ class HayaSelect
   end
 
   def search(value)
-    wait_for_and_find("#{base_selector} [data-class='search-text-input']").set(value)
+    search_input = wait_for_and_find("#{base_selector} [data-class='search-text-input']")
+    search_input.set("")
+    search_input.send_keys(value)
     self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
