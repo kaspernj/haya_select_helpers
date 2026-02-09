@@ -280,16 +280,19 @@ private
   end
 
   def close_if_open
-    return if scope.page.has_no_selector?(options_selector)
+    return if scope.page.has_no_selector?(options_selector, visible: :all)
 
     close_attempts = 0
 
-    while scope.page.has_selector?(options_selector) && close_attempts < 3
+    while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
       if scope.page.has_selector?(select_container_selector)
-        wait_for_and_find(select_container_selector).click
+        select_container = wait_for_and_find(select_container_selector)
+        click_element_safely(select_container)
       else
-        wait_for_and_find("body").click
+        body = wait_for_and_find("body")
+        click_element_safely(body)
       end
+      scope.page.find("body").send_keys(:escape)
 
       close_attempts += 1
     end
