@@ -363,8 +363,15 @@ private
   end
 
   def click_close_target
-    body = wait_for_and_find("body")
-    scope.page.driver.browser.action.move_to(body.native, 0, 0).click.perform
+    close_target = scope.page.first(
+      "[data-component='super-admin--layout'], " \
+      "[data-component='admin/layout'], " \
+      "[data-component='layout/base'], " \
+      ".react-root > *",
+      minimum: 0
+    )
+    close_target ||= wait_for_and_find("body")
+    scope.page.driver.browser.action.move_to(close_target.native, 0, 0).click.perform
   end
 
   def send_open_key
