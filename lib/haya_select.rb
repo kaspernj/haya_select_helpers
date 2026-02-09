@@ -295,13 +295,14 @@ private
 
     while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
       close_attempt
+      wait_for_browser { scope.page.has_no_selector?(options_selector, visible: :all) }
       close_attempts += 1
     end
 
     return if scope.page.has_no_selector?(options_selector, visible: :all)
 
-    scope.page.execute_script("document.activeElement && document.activeElement.blur()")
-    send_escape
+    body = wait_for_and_find("body")
+    body.send_keys(:escape)
   end
 
   def search_input_selector
