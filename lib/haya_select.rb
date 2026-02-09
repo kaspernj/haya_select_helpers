@@ -362,7 +362,6 @@ private
   def close_attempt
     close_search_input
     click_close_target
-    send_escape
   end
 
   def send_escape
