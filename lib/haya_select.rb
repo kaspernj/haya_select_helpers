@@ -90,8 +90,8 @@ class HayaSelect
       selected_value = select_option_value(label:, value:)
       selected_value = "" if selected_value.nil? && value.nil?
       allow_blank = previous_value == selected_value
-      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       close_if_open
+      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
