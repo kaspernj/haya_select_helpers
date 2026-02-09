@@ -369,13 +369,8 @@ private
   end
 
   def click_close_target
-    if scope.page.has_selector?(select_container_selector)
-      select_container = wait_for_and_find(select_container_selector)
-      click_element_safely(select_container)
-    else
-      body = wait_for_and_find("body")
-      click_element_safely(body)
-    end
+    body = wait_for_and_find("body")
+    scope.page.driver.browser.action.move_to(body.native, 0, 0).click.perform
   end
 
   def send_open_key
