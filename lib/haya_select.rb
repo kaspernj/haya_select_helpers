@@ -118,13 +118,13 @@ class HayaSelect
 
     option_value = option['data-value']
     if option.visible?
-      option.click
+      click_element_safely(option)
     else
       scope.page.execute_script(
         "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
         option
       )
-      scope.page.execute_script("arguments[0].click()", option)
+      scope.page.driver.browser.action.move_to(option.native).click.perform
     end
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -285,17 +285,13 @@ private
     close_attempts = 0
 
     while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
-      if scope.page.has_selector?(select_container_selector)
-        select_container = wait_for_and_find(select_container_selector)
-        click_element_safely(select_container)
-      else
-        body = wait_for_and_find("body")
-        click_element_safely(body)
-      end
-      scope.page.find("body").send_keys(:escape)
-
+      close_attempt
       close_attempts += 1
     end
+
+    return if scope.page.has_no_selector?(options_selector, visible: :all)
+
+    scope.page.execute_script("document.activeElement && document.activeElement.blur()")
   end
 
   def search_input_selector
@@ -338,7 +334,31 @@ private
   def click_element_safely(element)
     element.click
   rescue Selenium::WebDriver::Error::ElementClickInterceptedError
-    scope.page.execute_script("arguments[0].click()", element)
+    scope.page.driver.browser.action.move_to(element.native).click.perform
+  end
+
+  def close_attempt
+    close_search_input
+    click_close_target
+    scope.page.find("body").send_keys(:escape)
+  end
+
+  def close_search_input
+    return unless scope.page.has_selector?(search_input_selector)
+
+    search_input = wait_for_and_find(search_input_selector)
+    search_input.send_keys(:escape)
+    search_input.send_keys(:tab)
+  end
+
+  def click_close_target
+    if scope.page.has_selector?(select_container_selector)
+      select_container = wait_for_and_find(select_container_selector)
+      click_element_safely(select_container)
+    else
+      body = wait_for_and_find("body")
+      click_element_safely(body)
+    end
   end
 
   def send_open_key
