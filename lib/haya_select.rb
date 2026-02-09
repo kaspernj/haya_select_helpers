@@ -363,6 +363,11 @@ private
   end
 
   def click_close_target
+    if scope.page.has_selector?(select_container_selector)
+      click_element_safely(wait_for_and_find(select_container_selector))
+      return
+    end
+
     close_target = scope.page.first(
       "[data-component='super-admin--layout'], " \
       "[data-component='admin/layout'], " \
