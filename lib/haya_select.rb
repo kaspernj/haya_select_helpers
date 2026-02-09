@@ -228,11 +228,20 @@ private
 
   def wait_for_selected_value_or_label(label, value, allow_blank: false)
     wait_for_expect do
+      value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
+      has_value_input = scope.page.has_selector?(value_input_selector, visible: false)
       label_matches = label && label_matches?(label)
       value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
       blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false)
 
-      expect(label_matches || value_matches || blank_matches).to eq true
+      matches =
+        if has_value_input
+          value_matches || blank_matches
+        else
+          label_matches || value_matches || blank_matches
+        end
+
+      expect(matches).to eq true
     end
   end
 
