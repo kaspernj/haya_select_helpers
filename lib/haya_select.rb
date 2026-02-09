@@ -395,9 +395,7 @@ private
   def find_option_element(selector, label)
     return wait_for_and_find(selector, visible: :all) unless label
 
-    if selector.start_with?(select_option_container_selector)
-      return wait_for_and_find(selector, visible: :all)
-    end
+    return wait_for_and_find(selector, visible: :all) if selector.start_with?(select_option_container_selector)
 
     return wait_for_and_find(selector, visible: :all) if scope.page.has_selector?(selector, visible: :all)
 
