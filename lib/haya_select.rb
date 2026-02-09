@@ -458,6 +458,11 @@ private
 
     return wait_for_and_find(selector, visible: :all) if selector.start_with?(select_option_container_selector)
 
+    if selector.include?("option-presentation")
+      option_presentation = wait_for_and_find(selector, visible: :all)
+      return option_presentation.find(:xpath, "./ancestor::*[@data-class='select-option']")
+    end
+
     return wait_for_and_find(selector, visible: :all) if scope.page.has_selector?(selector, visible: :all)
 
     option_text = wait_for_and_find(option_label_selector, text: label, visible: :all)
