@@ -178,10 +178,13 @@ class HayaSelect
 private
 
   def select_option_selector(label:, value:)
-    selector = "#{options_selector} [data-testid='option-presentation']"
-    selector << "[data-text='#{label}']" unless label.nil?
-    selector << "[data-value='#{value}']" unless value.nil?
-    selector
+    if value
+      "#{select_option_container_selector}[data-value='#{value}']"
+    else
+      selector = "#{options_selector} [data-testid='option-presentation']"
+      selector << "[data-text='#{label}']" unless label.nil?
+      selector
+    end
   end
 
   # rubocop:disable Metrics/AbcSize
@@ -385,12 +388,20 @@ private
   def find_option_element(selector, label)
     return wait_for_and_find(selector) unless label
 
+    if selector.start_with?(select_option_container_selector)
+      return wait_for_and_find(selector)
+    end
+
     return wait_for_and_find(selector) if scope.page.has_selector?(selector)
 
     option_text = wait_for_and_find(option_label_selector, text: label)
-    option_text.find(:xpath, "./ancestor::*[@data-testid='option-presentation']")
+    option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
+  end
+
+  def select_option_container_selector
+    "#{options_selector} [data-class='select-option']"
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
