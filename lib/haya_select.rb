@@ -201,13 +201,13 @@ private
 
     return if option_present?(selector, label)
 
-    unless scope.page.has_selector?(search_input_selector)
-      wait_for_browser do
-        option_present?(selector, label)
-      end
-
-      return
+    wait_for_browser do
+      option_present?(selector, label)
     end
+
+    return if option_present?(selector, label)
+
+    return unless scope.page.has_selector?(search_input_selector)
 
     search_terms_for(label).each do |search_term|
       current_options_text = options_container_text
