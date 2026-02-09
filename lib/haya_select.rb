@@ -117,7 +117,15 @@ class HayaSelect
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    option.click
+    if option.visible?
+      option.click
+    else
+      scope.page.execute_script(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
+        option
+      )
+      scope.page.execute_script("arguments[0].click()", option)
+    end
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -189,7 +197,7 @@ private
 
   # rubocop:disable Metrics/AbcSize
   def wait_for_option(selector, label)
-    return wait_for_browser { scope.page.has_selector?(selector) } unless label
+    return wait_for_browser { scope.page.has_selector?(selector, visible: :all) } unless label
 
     return if option_present?(selector, label)
 
@@ -320,7 +328,7 @@ private
 
   def wait_for_open
     wait_for_browser do
-      scope.page.has_selector?(options_selector, visible: true)
+      scope.page.has_selector?(options_selector, visible: :all)
     end
   end
 
@@ -380,20 +388,20 @@ private
   end
 
   def option_present?(selector, label)
-    scope.page.has_selector?(selector) ||
-      scope.page.has_selector?(option_label_selector, text: label)
+    scope.page.has_selector?(selector, visible: :all) ||
+      scope.page.has_selector?(option_label_selector, text: label, visible: :all)
   end
 
   def find_option_element(selector, label)
-    return wait_for_and_find(selector) unless label
+    return wait_for_and_find(selector, visible: :all) unless label
 
     if selector.start_with?(select_option_container_selector)
-      return wait_for_and_find(selector)
+      return wait_for_and_find(selector, visible: :all)
     end
 
-    return wait_for_and_find(selector) if scope.page.has_selector?(selector)
+    return wait_for_and_find(selector, visible: :all) if scope.page.has_selector?(selector, visible: :all)
 
-    option_text = wait_for_and_find(option_label_selector, text: label)
+    option_text = wait_for_and_find(option_label_selector, text: label, visible: :all)
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
