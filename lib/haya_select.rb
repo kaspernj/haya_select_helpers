@@ -37,7 +37,7 @@ class HayaSelect
     attempts = 0
 
     begin
-      click_open_target
+      click_open_target_element
       wait_for_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -320,7 +320,7 @@ private
     "#{base_selector} [data-class='search-text-input']"
   end
 
-  def click_open_target
+  def click_open_target_element
     target_selector =
       if scope.page.has_selector?(select_container_selector)
         select_container_selector
@@ -336,8 +336,6 @@ private
       element
     )
     click_element_safely(element)
-
-    scope.page.has_selector?(opened_current_selected_selector)
   end
 
   def current_selected_selector
