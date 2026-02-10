@@ -310,7 +310,7 @@ private
   end
 
   def wait_for_close
-    wait_for_browser { scope.page.has_no_selector?(options_selector, visible: :all) }
+    wait_for_browser(timeout_sec: 1) { scope.page.has_no_selector?(options_selector, visible: :all) }
     true
   rescue WaitUtil::TimeoutError
     false
