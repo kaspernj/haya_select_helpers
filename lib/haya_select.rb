@@ -478,7 +478,7 @@ private
   end
 
   def option_click_target(option)
-    option.first("[data-testid='option-presentation']", minimum: 0) || option
+    option
   end
 
   def click_target_element(click_target)
