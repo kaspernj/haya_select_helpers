@@ -396,7 +396,7 @@ private
       minimum: 0
     )
     close_target ||= wait_for_and_find("body")
-    click_element_safely(close_target)
+    scope.page.driver.browser.action.move_to(close_target.native).click.perform
   end
 
   def send_open_key
