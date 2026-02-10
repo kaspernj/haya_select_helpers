@@ -337,9 +337,7 @@ private
     )
     click_element_safely(element)
 
-    return if scope.page.has_selector?(opened_current_selected_selector)
-
-    dispatch_open_events(element)
+    scope.page.has_selector?(opened_current_selected_selector)
   end
 
   def current_selected_selector
@@ -404,78 +402,6 @@ private
     select_container = wait_for_and_find(select_container_selector)
     select_container.send_keys(:enter)
     select_container.send_keys(:space)
-  end
-
-  def dispatch_open_events(element)
-    scope.page.execute_script(
-      <<~JS,
-        const target = arguments[0]
-        const pointerBase = {bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1}
-        const mouseBase = {bubbles: true, cancelable: true, button: 0, buttons: 1}
-        const events = [
-          new PointerEvent('pointerdown', pointerBase),
-          new MouseEvent('mousedown', mouseBase),
-          new PointerEvent('pointerup', pointerBase),
-          new MouseEvent('mouseup', mouseBase),
-          new MouseEvent('click', mouseBase)
-        ]
-
-        for (const event of events) target.dispatchEvent(event)
-      JS
-      element
-    )
-  end
-
-  def dispatch_option_events(option)
-    scope.page.execute_script(
-      <<~JS,
-        const target = arguments[0]
-        const pointerBase = {bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1}
-        const mouseBase = {bubbles: true, cancelable: true, button: 0, buttons: 1}
-        const events = [
-          new PointerEvent('pointerdown', pointerBase),
-          new MouseEvent('mousedown', mouseBase),
-          new PointerEvent('pointerup', pointerBase),
-          new MouseEvent('mouseup', mouseBase),
-          new MouseEvent('click', mouseBase)
-        ]
-
-        for (const event of events) target.dispatchEvent(event)
-      JS
-      option
-    )
-  end
-
-  def force_set_hidden_value(option_value)
-    input = scope.page.find(
-      "#{base_selector} [data-class='current-selected'] input[type='hidden']",
-      visible: false
-    )
-  rescue Capybara::ElementNotFound
-    return
-  else
-    input.set(option_value)
-    return if input.value == option_value
-
-    scope.page.execute_script(
-      <<~JS,
-        const input = arguments[0]
-        const value = arguments[1]
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set
-
-        if (setter) {
-          setter.call(input, value)
-        } else {
-          input.value = value
-        }
-
-        input.setAttribute("value", value)
-      input.dispatchEvent(new Event("input", {bubbles: true}))
-      input.dispatchEvent(new Event("change", {bubbles: true}))
-      JS
-      input, option_value
-    )
-  end
   end
 
   def current_option_label_selectors
@@ -563,8 +489,7 @@ private
 
     click_option_presentation(option, label, option_value)
     send_option_keys(option, label, option_value)
-    dispatch_option_events(option) unless selected?(label, option_value)
-    force_set_hidden_value(option_value) unless selected?(label, option_value)
+    click_option_element(option) unless selected?(label, option_value)
   end
 
   def click_option_presentation(option, label, option_value)
