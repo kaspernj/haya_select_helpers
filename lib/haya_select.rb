@@ -568,6 +568,10 @@ private
       return
     end
 
+    option_text = option.first("[data-testid='option-presentation-text']", minimum: 0)
+    click_option_element(option_text) if option_text
+    return if selected?(label, option_value)
+
     click_option_presentation(option, label, option_value)
     send_option_keys(option, label, option_value)
     dispatch_option_events(option) unless selected?(label, option_value)
