@@ -419,12 +419,14 @@ private
     scope.page.execute_script(
       <<~JS,
         const target = arguments[0]
+        const pointerBase = {bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1}
+        const mouseBase = {bubbles: true, cancelable: true, button: 0, buttons: 1}
         const events = [
-          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
-          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
-          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
-          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
-          new MouseEvent('click', {bubbles: true, cancelable: true})
+          new PointerEvent('pointerdown', pointerBase),
+          new MouseEvent('mousedown', mouseBase),
+          new PointerEvent('pointerup', pointerBase),
+          new MouseEvent('mouseup', mouseBase),
+          new MouseEvent('click', mouseBase)
         ]
 
         for (const event of events) target.dispatchEvent(event)
