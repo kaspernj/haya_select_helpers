@@ -546,16 +546,7 @@ private
     return if element.nil?
 
     element.native.location_once_scrolled_into_view
-    scope.page.driver.browser.action.move_to(element.native).click.perform
-  rescue Selenium::WebDriver::Error::ElementClickInterceptedError,
-         Selenium::WebDriver::Error::ElementNotInteractableError,
-         Selenium::WebDriver::Error::MoveTargetOutOfBoundsError
-    begin
-      element.click
-    rescue Selenium::WebDriver::Error::ElementClickInterceptedError,
-           Selenium::WebDriver::Error::ElementNotInteractableError
-      element.native.click
-    end
+    element.click
   end
 
   def perform_option_selection(option, label, option_value)
