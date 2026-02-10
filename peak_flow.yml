@@ -4,3 +4,9 @@ builds:
     name: Rubocop
     script:
       - bundle exec rubocop
+  system_tests:
+    name: System tests
+    script:
+      - cd spec/dummy && npm install --legacy-peer-deps
+      - cd spec/dummy && npm run build:test
+      - bundle exec rspec spec/system/dummy_react_haya_select_spec.rb

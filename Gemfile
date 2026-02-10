@@ -5,8 +5,13 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 gem "sqlite3"
+gem "puma"
 
 gem "sprockets-rails"
+gem "shakapacker", "~> 9.4"
+gem "rspec-rails", "~> 6.1"
+gem "capybara", "~> 3.40"
+gem "selenium-webdriver", "~> 4.10"
 
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"
