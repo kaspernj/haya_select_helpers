@@ -4,9 +4,13 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 # Specify your gem's dependencies in haya_select_helpers.gemspec.
 gemspec
 
-gem "sqlite3"
-
+gem "capybara", "~> 3.40"
+gem "puma"
+gem "rspec-rails", "~> 6.1"
+gem "selenium-webdriver", "~> 4.10"
+gem "shakapacker", "~> 9.4"
 gem "sprockets-rails"
+gem "sqlite3"
 
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"

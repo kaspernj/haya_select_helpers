@@ -75,7 +75,9 @@ class HayaSelect
   end
 
   def search(value)
-    wait_for_and_find("#{base_selector} [data-class='search-text-input']").set(value)
+    search_input = wait_for_and_find("#{base_selector} [data-class='search-text-input']")
+    search_input.set("")
+    search_input.send_keys(value)
     self
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -194,6 +196,13 @@ private
 
     return if option_present?(selector, label)
 
+    if scope.page.has_selector?(options_selector, visible: :all)
+      wait_for_browser do
+        scope.page.has_selector?("#{options_selector} [data-class='select-option']", visible: :all) ||
+          scope.page.has_selector?(no_options_selector, visible: :all)
+      end
+    end
+
     wait_for_browser do
       option_present?(selector, label)
     end
@@ -288,7 +297,8 @@ private
 
     while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
       close_attempt
-      wait_for_browser { scope.page.has_no_selector?(options_selector, visible: :all) }
+      break if wait_for_close
+
       close_attempts += 1
     end
 
@@ -296,6 +306,14 @@ private
 
     body = wait_for_and_find("body")
     body.send_keys(:escape)
+    wait_for_close
+  end
+
+  def wait_for_close
+    expect(scope.page).to have_no_selector(options_selector, visible: :all, wait: 1)
+    true
+  rescue RSpec::Expectations::ExpectationNotMetError
+    false
   end
 
   def search_input_selector
@@ -344,7 +362,6 @@ private
   def close_attempt
     close_search_input
     click_close_target
-    send_escape
   end
 
   def send_escape
@@ -363,8 +380,17 @@ private
   end
 
   def click_close_target
-    body = wait_for_and_find("body")
-    scope.page.driver.browser.action.move_to(body.native, 0, 0).click.perform
+    click_element_safely(wait_for_and_find(select_container_selector)) if scope.page.has_selector?(select_container_selector)
+
+    close_target = scope.page.first(
+      "[data-component='super-admin--layout'], " \
+      "[data-component='admin/layout'], " \
+      "[data-component='layout/base'], " \
+      ".react-root > *",
+      minimum: 0
+    )
+    close_target ||= wait_for_and_find("body")
+    scope.page.driver.browser.action.move_to(close_target.native, 0, 0).click.perform
   end
 
   def send_open_key
@@ -432,6 +458,11 @@ private
 
     return wait_for_and_find(selector, visible: :all) if selector.start_with?(select_option_container_selector)
 
+    if selector.include?("option-presentation")
+      option_presentation = wait_for_and_find(selector, visible: :all)
+      return option_presentation.find(:xpath, "./ancestor::*[@data-class='select-option']")
+    end
+
     return wait_for_and_find(selector, visible: :all) if scope.page.has_selector?(selector, visible: :all)
 
     option_text = wait_for_and_find(option_label_selector, text: label, visible: :all)
@@ -441,9 +472,7 @@ private
   end
 
   def option_click_target(option)
-    return option unless option.has_selector?("[data-testid='option-presentation']", visible: :all)
-
-    option.find("[data-testid='option-presentation']", visible: :all)
+    option.first("[data-testid='option-presentation']", minimum: 0) || option
   end
 
   def click_target_element(click_target)

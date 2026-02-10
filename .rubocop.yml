@@ -8,6 +8,7 @@ AllCops:
     - db/schema.rb
     - frontend/node_modules/**/*
     - node_modules/**/*
+    - spec/dummy/node_modules/**/*
   NewCops: enable
   TargetRubyVersion: 3.2
 
