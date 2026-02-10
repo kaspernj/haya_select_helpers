@@ -468,7 +468,7 @@ private
   end
 
   def click_option_element(element)
-    return if element.nil?
+    raise ArgumentError, "Expected a clickable option element, got nil" if element.nil?
 
     element.native.location_once_scrolled_into_view
     element.click
