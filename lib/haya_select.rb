@@ -331,7 +331,6 @@ private
       end
 
     element = wait_for_and_find(target_selector)
-    scope.page.execute_script("arguments[0].focus()", element)
     scope.page.execute_script(
       "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
       element
@@ -578,7 +577,7 @@ private
   def send_option_keys(option, label, option_value)
     return if selected?(label, option_value)
 
-    scope.page.execute_script("arguments[0].focus()", option)
+    option.click
     option.send_keys(:enter)
     option.send_keys(:space)
   end
