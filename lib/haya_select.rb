@@ -310,9 +310,9 @@ private
   end
 
   def wait_for_close
-    wait_for_browser(timeout_sec: 1) { scope.page.has_no_selector?(options_selector, visible: :all) }
+    expect(scope.page).to have_no_selector(options_selector, visible: :all, wait: 1)
     true
-  rescue WaitUtil::TimeoutError
+  rescue RSpec::Expectations::ExpectationNotMetError
     false
   end
 
