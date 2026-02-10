@@ -2,8 +2,6 @@
 
 # rubocop:disable Metrics/ClassLength, Style/Documentation
 class HayaSelect
-  include Capybara::RSpecMatchers
-
   attr_reader :base_selector,
     :not_opened_current_selected_selector,
     :opened_current_selected_selector,
@@ -68,6 +66,12 @@ class HayaSelect
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
+
+  def no_selector?(...)
+    scope.page.has_no_selector?(...)
+  end
+
+  alias have_no_selector no_selector?
 
   def wait_for_options(expected_options)
     wait_for_expect do
