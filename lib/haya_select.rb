@@ -90,8 +90,8 @@ class HayaSelect
       selected_value = select_option_value(label:, value:)
       selected_value = "" if selected_value.nil? && value.nil?
       allow_blank = previous_value == selected_value
-      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       close_if_open
+      wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
@@ -113,19 +113,12 @@ class HayaSelect
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
     option = find_option_element(selector, label)
+    click_target = option_click_target(option)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    if option.visible?
-      option.click
-    else
-      scope.page.execute_script(
-        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
-        option
-      )
-      scope.page.execute_script("arguments[0].click()", option)
-    end
+    click_target_element(click_target)
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -201,13 +194,13 @@ private
 
     return if option_present?(selector, label)
 
-    unless scope.page.has_selector?(search_input_selector)
-      wait_for_browser do
-        option_present?(selector, label)
-      end
-
-      return
+    wait_for_browser do
+      option_present?(selector, label)
     end
+
+    return if option_present?(selector, label)
+
+    return unless scope.page.has_selector?(search_input_selector)
 
     search_terms_for(label).each do |search_term|
       current_options_text = options_container_text
@@ -228,11 +221,20 @@ private
 
   def wait_for_selected_value_or_label(label, value, allow_blank: false)
     wait_for_expect do
+      value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
+      has_value_input = scope.page.has_selector?(value_input_selector, visible: false)
       label_matches = label && label_matches?(label)
       value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
       blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false)
 
-      expect(label_matches || value_matches || blank_matches).to eq true
+      matches =
+        if has_value_input
+          value_matches || blank_matches
+        else
+          label_matches || value_matches || blank_matches
+        end
+
+      expect(matches).to eq true
     end
   end
 
@@ -280,19 +282,20 @@ private
   end
 
   def close_if_open
-    return if scope.page.has_no_selector?(options_selector)
+    return if scope.page.has_no_selector?(options_selector, visible: :all)
 
     close_attempts = 0
 
-    while scope.page.has_selector?(options_selector) && close_attempts < 3
-      if scope.page.has_selector?(select_container_selector)
-        wait_for_and_find(select_container_selector).click
-      else
-        wait_for_and_find("body").click
-      end
-
+    while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
+      close_attempt
+      wait_for_browser { scope.page.has_no_selector?(options_selector, visible: :all) }
       close_attempts += 1
     end
+
+    return if scope.page.has_no_selector?(options_selector, visible: :all)
+
+    body = wait_for_and_find("body")
+    body.send_keys(:escape)
   end
 
   def search_input_selector
@@ -335,7 +338,33 @@ private
   def click_element_safely(element)
     element.click
   rescue Selenium::WebDriver::Error::ElementClickInterceptedError
-    scope.page.execute_script("arguments[0].click()", element)
+    scope.page.driver.browser.action.move_to(element.native).click.perform
+  end
+
+  def close_attempt
+    close_search_input
+    click_close_target
+    send_escape
+  end
+
+  def send_escape
+    scope.page.driver.browser.action.send_keys(:escape).perform
+  rescue Selenium::WebDriver::Error::InvalidElementStateError
+    scope.page.find("body").send_keys(:escape)
+  end
+
+  def close_search_input
+    return unless scope.page.has_selector?(search_input_selector)
+
+    search_input = wait_for_and_find(search_input_selector)
+    click_element_safely(search_input)
+    search_input.send_keys(:escape)
+    search_input.send_keys(:tab)
+  end
+
+  def click_close_target
+    body = wait_for_and_find("body")
+    scope.page.driver.browser.action.move_to(body.native, 0, 0).click.perform
   end
 
   def send_open_key
@@ -409,6 +438,24 @@ private
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
+  end
+
+  def option_click_target(option)
+    return option unless option.has_selector?("[data-testid='option-presentation']", visible: :all)
+
+    option.find("[data-testid='option-presentation']", visible: :all)
+  end
+
+  def click_target_element(click_target)
+    if click_target.visible?
+      click_element_safely(click_target)
+    else
+      scope.page.execute_script(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
+        click_target
+      )
+      scope.page.driver.browser.action.move_to(click_target.native).click.perform
+    end
   end
 
   def select_option_container_selector
