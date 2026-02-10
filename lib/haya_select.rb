@@ -577,9 +577,7 @@ private
   def send_option_keys(option, label, option_value)
     return if selected?(label, option_value)
 
-    option.click
     option.send_keys(:enter)
-    option.send_keys(:space)
   end
 
   def select_option_container_selector
