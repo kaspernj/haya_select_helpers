@@ -466,6 +466,26 @@ private
       visible: false
     )
     input.set(option_value)
+    return if input.value == option_value
+
+    scope.page.execute_script(
+      <<~JS,
+        const input = arguments[0]
+        const value = arguments[1]
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set
+
+        if (setter) {
+          setter.call(input, value)
+        } else {
+          input.value = value
+        }
+
+        input.setAttribute("value", value)
+        input.dispatchEvent(new Event("input", {bubbles: true}))
+        input.dispatchEvent(new Event("change", {bubbles: true}))
+      JS
+      input, option_value
+    )
   end
 
   def current_option_label_selectors
