@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "dummy app haya-select routes", type: :system do
+RSpec.describe "dummy app haya-select routes" do
   it "shows the React router home page" do
     visit "/"
 
