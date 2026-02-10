@@ -561,6 +561,13 @@ private
 
   def perform_option_selection(option, label, option_value)
     click_option_element(option)
+    return if selected?(label, option_value)
+
+    if scope.page.has_selector?(current_value_selector(option_value), visible: false, wait: 1) ||
+        (label && label_matches?(label))
+      return
+    end
+
     click_option_presentation(option, label, option_value)
     send_option_keys(option, label, option_value)
     dispatch_option_events(option) unless selected?(label, option_value)
