@@ -67,12 +67,6 @@ class HayaSelect
     retry
   end
 
-  def no_selector?(...)
-    scope.page.has_no_selector?(...)
-  end
-
-  alias have_no_selector no_selector?
-
   def wait_for_options(expected_options)
     wait_for_expect do
       expect(options).to eq expected_options
