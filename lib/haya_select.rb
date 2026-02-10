@@ -534,13 +534,9 @@ private
   def click_option_element(element)
     return if element.nil?
 
-    unless element.visible?
-      scope.page.execute_script(
-        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
-        element
-      )
-    end
-
+    element.native.location_once_scrolled_into_view
+    element.native.click
+  rescue Selenium::WebDriver::Error::ElementClickInterceptedError
     scope.page.driver.browser.action.move_to(element.native).click.perform
   end
 
