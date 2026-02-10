@@ -455,17 +455,11 @@ private
   end
 
   def force_set_hidden_value(option_value)
-    scope.page.execute_script(
-      <<~JS
-        const base = document.querySelector("#{base_selector}")
-        if (!base) return
-        const input = base.querySelector("[data-class='current-selected'] input[type='hidden']")
-        if (!input) return
-        input.value = "#{option_value}"
-        input.dispatchEvent(new Event("input", {bubbles: true}))
-        input.dispatchEvent(new Event("change", {bubbles: true}))
-      JS
+    input = scope.page.find(
+      "#{base_selector} [data-class='current-selected'] input[type='hidden']",
+      visible: false
     )
+    input.set(option_value)
   end
 
   def current_option_label_selectors
@@ -521,7 +515,7 @@ private
   end
 
   def option_click_target(option)
-    option
+    option.find("[data-testid='option-presentation']", minimum: 0) || option
   end
 
   def click_target_element(click_target)
@@ -532,7 +526,7 @@ private
       )
     end
 
-    scope.page.driver.browser.action.move_to(click_target.native).click.perform
+    click_element_safely(click_target)
   end
 
   def select_option_container_selector
