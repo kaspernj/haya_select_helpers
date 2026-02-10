@@ -306,6 +306,9 @@ private
 
     body = wait_for_and_find("body")
     body.send_keys(:escape)
+    return if wait_for_close?
+
+    click_element_safely(body)
     wait_for_close?
   end
 
