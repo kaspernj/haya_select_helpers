@@ -361,6 +361,7 @@ private
 
   def close_attempt
     close_search_input
+    send_close_escape
     click_close_target
   end
 
@@ -379,9 +380,14 @@ private
     search_input.send_keys(:tab)
   end
 
-  def click_close_target
-    click_element_safely(wait_for_and_find(select_container_selector)) if scope.page.has_selector?(select_container_selector)
+  def send_close_escape
+    select_container = scope.page.first(select_container_selector, minimum: 0)
+    return select_container.send_keys(:escape) if select_container
 
+    send_escape
+  end
+
+  def click_close_target
     close_target = scope.page.first(
       "[data-component='super-admin--layout'], " \
       "[data-component='admin/layout'], " \
@@ -390,7 +396,7 @@ private
       minimum: 0
     )
     close_target ||= wait_for_and_find("body")
-    scope.page.driver.browser.action.move_to(close_target.native, 0, 0).click.perform
+    click_element_safely(close_target)
   end
 
   def send_open_key
