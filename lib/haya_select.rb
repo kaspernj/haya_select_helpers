@@ -297,7 +297,7 @@ private
 
     while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
       close_attempt
-      break if wait_for_close
+      break if wait_for_close?
 
       close_attempts += 1
     end
@@ -306,14 +306,11 @@ private
 
     body = wait_for_and_find("body")
     body.send_keys(:escape)
-    wait_for_close
+    wait_for_close?
   end
 
-  def wait_for_close
-    expect(scope.page).to have_no_selector(options_selector, visible: :all, wait: 1)
-    true
-  rescue RSpec::Expectations::ExpectationNotMetError
-    false
+  def wait_for_close?
+    scope.page.has_no_selector?(options_selector, visible: :all, wait: 1)
   end
 
   def search_input_selector
