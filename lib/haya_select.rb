@@ -119,11 +119,11 @@ class HayaSelect
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    click_element_safely(option)
+    click_option_element(option)
 
     unless selected?(label, option_value)
       option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
-      click_element_safely(option_presentation) if option_presentation
+      click_option_element(option_presentation) if option_presentation
     end
 
     unless selected?(label, option_value)
@@ -527,6 +527,19 @@ private
     end
 
     click_element_safely(click_target)
+  end
+
+  def click_option_element(element)
+    return if element.nil?
+
+    unless element.visible?
+      scope.page.execute_script(
+        "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
+        element
+      )
+    end
+
+    scope.page.driver.browser.action.move_to(element.native).click.perform
   end
 
   def select_option_container_selector
