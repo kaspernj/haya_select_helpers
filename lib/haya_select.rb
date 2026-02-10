@@ -466,18 +466,18 @@ private
   end
 
   def find_option_element(selector, label)
-    return wait_for_and_find(selector, visible: :all) unless label
+    return wait_for_and_find(selector) unless label
 
-    return wait_for_and_find(selector, visible: :all) if selector.start_with?(select_option_container_selector)
+    return wait_for_and_find(selector) if selector.start_with?(select_option_container_selector)
 
     if selector.include?("option-presentation")
-      option_presentation = wait_for_and_find(selector, visible: :all)
+      option_presentation = wait_for_and_find(selector)
       return option_presentation.find(:xpath, "./ancestor::*[@data-class='select-option']")
     end
 
-    return wait_for_and_find(selector, visible: :all) if scope.page.has_selector?(selector, visible: :all)
+    return wait_for_and_find(selector) if scope.page.has_selector?(selector)
 
-    option_text = wait_for_and_find(option_label_selector, text: label, visible: :all)
+    option_text = wait_for_and_find(option_label_selector, text: label)
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
