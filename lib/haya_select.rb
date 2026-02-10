@@ -452,6 +452,9 @@ private
       "#{base_selector} [data-class='current-selected'] input[type='hidden']",
       visible: false
     )
+  rescue Capybara::ElementNotFound
+    return
+  else
     input.set(option_value)
     return if input.value == option_value
 
@@ -468,11 +471,12 @@ private
         }
 
         input.setAttribute("value", value)
-        input.dispatchEvent(new Event("input", {bubbles: true}))
-        input.dispatchEvent(new Event("change", {bubbles: true}))
+      input.dispatchEvent(new Event("input", {bubbles: true}))
+      input.dispatchEvent(new Event("change", {bubbles: true}))
       JS
       input, option_value
     )
+  end
   end
 
   def current_option_label_selectors
