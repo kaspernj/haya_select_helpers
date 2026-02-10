@@ -37,7 +37,7 @@ class HayaSelect
     attempts = 0
 
     begin
-      click_open_target
+      click_open_target_element
       wait_for_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -115,20 +115,11 @@ class HayaSelect
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
     option = find_option_element(selector, label)
-    click_target = option_click_target(option)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    click_target_element(click_target)
-
-    unless selected?(label, option_value)
-      option.send_keys(:enter)
-      option.send_keys(:space)
-    end
-
-    dispatch_option_events(option) unless selected?(label, option_value)
-    force_set_hidden_value(option_value) unless selected?(label, option_value)
+    perform_option_selection(option, label, option_value)
 
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -329,7 +320,7 @@ private
     "#{base_selector} [data-class='search-text-input']"
   end
 
-  def click_open_target
+  def click_open_target_element
     target_selector =
       if scope.page.has_selector?(select_container_selector)
         select_container_selector
@@ -340,16 +331,11 @@ private
       end
 
     element = wait_for_and_find(target_selector)
-    scope.page.execute_script("arguments[0].focus()", element)
     scope.page.execute_script(
       "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
       element
     )
     click_element_safely(element)
-
-    return if scope.page.has_selector?(opened_current_selected_selector)
-
-    dispatch_open_events(element)
   end
 
   def current_selected_selector
@@ -416,58 +402,6 @@ private
     select_container.send_keys(:space)
   end
 
-  def dispatch_open_events(element)
-    scope.page.execute_script(
-      <<~JS,
-        const target = arguments[0]
-        const pointerBase = {bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1}
-        const mouseBase = {bubbles: true, cancelable: true, button: 0, buttons: 1}
-        const events = [
-          new PointerEvent('pointerdown', pointerBase),
-          new MouseEvent('mousedown', mouseBase),
-          new PointerEvent('pointerup', pointerBase),
-          new MouseEvent('mouseup', mouseBase),
-          new MouseEvent('click', mouseBase)
-        ]
-
-        for (const event of events) target.dispatchEvent(event)
-      JS
-      element
-    )
-  end
-
-  def dispatch_option_events(option)
-    scope.page.execute_script(
-      <<~JS,
-        const target = arguments[0]
-        const events = [
-          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
-          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
-          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
-          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
-          new MouseEvent('click', {bubbles: true, cancelable: true})
-        ]
-
-        for (const event of events) target.dispatchEvent(event)
-      JS
-      option
-    )
-  end
-
-  def force_set_hidden_value(option_value)
-    scope.page.execute_script(
-      <<~JS
-        const base = document.querySelector("#{base_selector}")
-        if (!base) return
-        const input = base.querySelector("[data-class='current-selected'] input[type='hidden']")
-        if (!input) return
-        input.value = "#{option_value}"
-        input.dispatchEvent(new Event("input", {bubbles: true}))
-        input.dispatchEvent(new Event("change", {bubbles: true}))
-      JS
-    )
-  end
-
   def current_option_label_selectors
     [
       "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']",
@@ -520,10 +454,6 @@ private
     retry
   end
 
-  def option_click_target(option)
-    option
-  end
-
   def click_target_element(click_target)
     unless click_target.visible?
       scope.page.execute_script(
@@ -532,7 +462,45 @@ private
       )
     end
 
-    scope.page.driver.browser.action.move_to(click_target.native).click.perform
+    click_element_safely(click_target)
+  end
+
+  def click_option_element(element)
+    raise ArgumentError, "Expected a clickable option element, got nil" if element.nil?
+
+    element.native.location_once_scrolled_into_view
+    element.click
+  end
+
+  def perform_option_selection(option, label, option_value)
+    click_option_element(option)
+    return if selected?(label, option_value)
+
+    if scope.page.has_selector?(current_value_selector(option_value), visible: false, wait: 1) ||
+        (label && label_matches?(label))
+      return
+    end
+
+    option_text = option.first("[data-testid='option-presentation-text']", minimum: 0)
+    click_option_element(option_text) if option_text
+    return if selected?(label, option_value)
+
+    click_option_presentation(option, label, option_value)
+    send_option_keys(option, label, option_value)
+    click_option_element(option) unless selected?(label, option_value)
+  end
+
+  def click_option_presentation(option, label, option_value)
+    return if selected?(label, option_value)
+
+    option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
+    click_option_element(option_presentation) if option_presentation
+  end
+
+  def send_option_keys(option, label, option_value)
+    return if selected?(label, option_value)
+
+    option.click
   end
 
   def select_option_container_selector
