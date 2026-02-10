@@ -548,14 +548,15 @@ private
     return if element.nil?
 
     element.native.location_once_scrolled_into_view
-    element.click
+    scope.page.driver.browser.action.move_to(element.native).click.perform
   rescue Selenium::WebDriver::Error::ElementClickInterceptedError,
-         Selenium::WebDriver::Error::ElementNotInteractableError
+         Selenium::WebDriver::Error::ElementNotInteractableError,
+         Selenium::WebDriver::Error::MoveTargetOutOfBoundsError
     begin
-      element.native.click
+      element.click
     rescue Selenium::WebDriver::Error::ElementClickInterceptedError,
            Selenium::WebDriver::Error::ElementNotInteractableError
-      scope.page.driver.browser.action.move_to(element.native).click.perform
+      element.native.click
     end
   end
 
