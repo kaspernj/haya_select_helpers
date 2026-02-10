@@ -127,6 +127,8 @@ class HayaSelect
       option.send_keys(:space)
     end
 
+    dispatch_option_events(option) unless selected?(label, option_value)
+
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
@@ -428,6 +430,24 @@ private
         for (const event of events) target.dispatchEvent(event)
       JS
       element
+    )
+  end
+
+  def dispatch_option_events(option)
+    scope.page.execute_script(
+      <<~JS,
+        const target = arguments[0]
+        const events = [
+          new PointerEvent('pointerdown', {bubbles: true, cancelable: true}),
+          new MouseEvent('mousedown', {bubbles: true, cancelable: true}),
+          new PointerEvent('pointerup', {bubbles: true, cancelable: true}),
+          new MouseEvent('mouseup', {bubbles: true, cancelable: true}),
+          new MouseEvent('click', {bubbles: true, cancelable: true})
+        ]
+
+        for (const event of events) target.dispatchEvent(event)
+      JS
+      option
     )
   end
 
