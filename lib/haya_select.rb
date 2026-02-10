@@ -2,6 +2,8 @@
 
 # rubocop:disable Metrics/ClassLength, Style/Documentation
 class HayaSelect
+  include Capybara::RSpecMatchers
+
   attr_reader :base_selector,
     :not_opened_current_selected_selector,
     :opened_current_selected_selector,
