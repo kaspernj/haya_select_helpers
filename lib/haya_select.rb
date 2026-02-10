@@ -119,20 +119,7 @@ class HayaSelect
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    click_option_element(option)
-
-    unless selected?(label, option_value)
-      option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
-      click_option_element(option_presentation) if option_presentation
-    end
-
-    unless selected?(label, option_value)
-      option.send_keys(:enter)
-      option.send_keys(:space)
-    end
-
-    dispatch_option_events(option) unless selected?(label, option_value)
-    force_set_hidden_value(option_value) unless selected?(label, option_value)
+    perform_option_selection(option, label, option_value)
 
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -558,6 +545,29 @@ private
     element.native.click
   rescue Selenium::WebDriver::Error::ElementClickInterceptedError
     scope.page.driver.browser.action.move_to(element.native).click.perform
+  end
+
+  def perform_option_selection(option, label, option_value)
+    click_option_element(option)
+    click_option_presentation(option, label, option_value)
+    send_option_keys(option, label, option_value)
+    dispatch_option_events(option) unless selected?(label, option_value)
+    force_set_hidden_value(option_value) unless selected?(label, option_value)
+  end
+
+  def click_option_presentation(option, label, option_value)
+    return if selected?(label, option_value)
+
+    option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
+    click_option_element(option_presentation) if option_presentation
+  end
+
+  def send_option_keys(option, label, option_value)
+    return if selected?(label, option_value)
+
+    scope.page.execute_script("arguments[0].focus()", option)
+    option.send_keys(:enter)
+    option.send_keys(:space)
   end
 
   def select_option_container_selector
