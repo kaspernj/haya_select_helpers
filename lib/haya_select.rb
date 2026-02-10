@@ -55,7 +55,7 @@ class HayaSelect
   end
 
   def options
-    wait_for_selector "#{options_selector} [data-class='select-option']"
+    wait_for_selector "#{options_selector} [data-class='select-option']", visible: :all
     option_elements = all("#{options_selector} [data-class='select-option']")
     option_elements.map do |option_element|
       {
