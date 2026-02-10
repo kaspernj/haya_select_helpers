@@ -128,6 +128,7 @@ class HayaSelect
     end
 
     dispatch_option_events(option) unless selected?(label, option_value)
+    force_set_hidden_value(option_value) unless selected?(label, option_value)
 
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
@@ -450,6 +451,20 @@ private
         for (const event of events) target.dispatchEvent(event)
       JS
       option
+    )
+  end
+
+  def force_set_hidden_value(option_value)
+    scope.page.execute_script(
+      <<~JS
+        const base = document.querySelector("#{base_selector}")
+        if (!base) return
+        const input = base.querySelector("[data-class='current-selected'] input[type='hidden']")
+        if (!input) return
+        input.value = "#{option_value}"
+        input.dispatchEvent(new Event("input", {bubbles: true}))
+        input.dispatchEvent(new Event("change", {bubbles: true}))
+      JS
     )
   end
 
