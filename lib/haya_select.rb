@@ -192,18 +192,18 @@ private
 
   # rubocop:disable Metrics/AbcSize
   def wait_for_option(selector, label)
-    return wait_for_browser { scope.page.has_selector?(selector, visible: :all) } unless label
+    return wait_for_browser(message: "waiting for option selector '#{selector}' to appear") { scope.page.has_selector?(selector, visible: :all) } unless label
 
     return if option_present?(selector, label)
 
     if scope.page.has_selector?(options_selector, visible: :all)
-      wait_for_browser do
+      wait_for_browser(message: "waiting for options list or no-options state while finding '#{label}'") do
         scope.page.has_selector?("#{options_selector} [data-class='select-option']", visible: :all) ||
           scope.page.has_selector?(no_options_selector, visible: :all)
       end
     end
 
-    wait_for_browser do
+    wait_for_browser(message: "waiting for option '#{label}' to be present") do
       option_present?(selector, label)
     end
 
@@ -215,14 +215,14 @@ private
       current_options_text = options_container_text
       search_for_option(search_term)
 
-      wait_for_browser do
+      wait_for_browser(message: "waiting for option '#{label}' or options update after searching '#{search_term}'") do
         option_present?(selector, label) || options_container_updated?(search_term, current_options_text)
       end
 
       break if option_present?(selector, label)
     end
 
-    wait_for_browser do
+    wait_for_browser(message: "waiting for option '#{label}' to be present after search attempts") do
       option_present?(selector, label)
     end
   end
@@ -343,7 +343,7 @@ private
   end
 
   def wait_for_open
-    wait_for_browser do
+    wait_for_browser(message: "waiting for haya-select options container to open") do
       scope.page.has_selector?(options_selector, visible: :all)
     end
   end
