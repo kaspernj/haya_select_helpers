@@ -121,6 +121,12 @@ class HayaSelect
 
     option_value = option['data-value']
     click_target_element(click_target)
+
+    unless selected?(label, option_value)
+      option.send_keys(:enter)
+      option.send_keys(:space)
+    end
+
     option_value
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
