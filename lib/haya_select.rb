@@ -115,12 +115,16 @@ class HayaSelect
     selector = select_option_selector(label: label, value: value)
     wait_for_option(selector, label)
     option = find_option_element(selector, label)
-    click_target = option_click_target(option)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
     option_value = option['data-value']
-    click_target_element(click_target)
+    click_element_safely(option)
+
+    unless selected?(label, option_value)
+      option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
+      click_element_safely(option_presentation) if option_presentation
+    end
 
     unless selected?(label, option_value)
       option.send_keys(:enter)
@@ -512,10 +516,6 @@ private
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
-  end
-
-  def option_click_target(option)
-    option.find("[data-testid='option-presentation']", minimum: 0) || option
   end
 
   def click_target_element(click_target)
