@@ -482,15 +482,14 @@ private
   end
 
   def click_target_element(click_target)
-    if click_target.visible?
-      click_element_safely(click_target)
-    else
+    unless click_target.visible?
       scope.page.execute_script(
         "arguments[0].scrollIntoView({block: 'center', inline: 'center'})",
         click_target
       )
-      scope.page.driver.browser.action.move_to(click_target.native).click.perform
     end
+
+    scope.page.driver.browser.action.move_to(click_target.native).click.perform
   end
 
   def select_option_container_selector
