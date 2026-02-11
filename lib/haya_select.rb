@@ -33,7 +33,13 @@ class HayaSelect
     retry
   end
 
-  def open
+  def open(allow_if_open: false)
+    if scope.page.has_selector?(options_selector, visible: :all, wait: 0)
+      return self if allow_if_open
+
+      raise "Expected haya-select '#{base_selector}' to be closed, but it was already open"
+    end
+
     attempts = 0
 
     begin
@@ -44,7 +50,7 @@ class HayaSelect
       attempts += 1
       send_open_key
       retry if attempts < 3
-      raise
+      raise "Failed to open haya-select options for '#{base_selector}' (options container not found)"
     end
   end
 
@@ -102,6 +108,27 @@ class HayaSelect
     end
   end
 
+  def deselect(label: nil, value: nil)
+    raise "No 'label' or 'value' given" if label.nil? && value.nil?
+
+    attempts = 0
+
+    begin
+      option, option_value = open_and_find_option_for(label:, value:)
+      raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
+      raise "The '#{label}'-option is not selected" unless option_selected?(option, label, option_value)
+
+      perform_option_deselection(option, label, option_value)
+      close_if_open
+      wait_for_expect { expect(selected?(label, option_value)).to eq false }
+      self
+    rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+      attempts += 1
+      retry if attempts < 3
+      raise
+    end
+  end
+
   def select_option(label: nil, value: nil)
     select_option_value(label: label, value: value)
     self
@@ -113,7 +140,7 @@ class HayaSelect
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
-    wait_for_option(selector, label)
+    wait_for_option(selector)
     option = find_option_element(selector, label)
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
@@ -190,43 +217,33 @@ private
     end
   end
 
-  # rubocop:disable Metrics/AbcSize
-  def wait_for_option(selector, label)
-    return wait_for_browser(message: "waiting for option selector '#{selector}' to appear") { scope.page.has_selector?(selector, visible: :all) } unless label
-
-    return if option_present?(selector, label)
-
-    if scope.page.has_selector?(options_selector, visible: :all)
-      wait_for_browser(message: "waiting for options list or no-options state while finding '#{label}'") do
-        scope.page.has_selector?("#{options_selector} [data-class='select-option']", visible: :all) ||
-          scope.page.has_selector?(no_options_selector, visible: :all)
-      end
-    end
-
-    wait_for_browser(message: "waiting for option '#{label}' to be present") do
-      option_present?(selector, label)
-    end
-
-    return if option_present?(selector, label)
-
-    return unless scope.page.has_selector?(search_input_selector)
-
-    search_terms_for(label).each do |search_term|
-      current_options_text = options_container_text
-      search_for_option(search_term)
-
-      wait_for_browser(message: "waiting for option '#{label}' or options update after searching '#{search_term}'") do
-        option_present?(selector, label) || options_container_updated?(search_term, current_options_text)
-      end
-
-      break if option_present?(selector, label)
-    end
-
-    wait_for_browser(message: "waiting for option '#{label}' to be present after search attempts") do
-      option_present?(selector, label)
-    end
+  def wait_for_option(selector)
+    wait_for_selector(selector, visible: :all)
   end
-  # rubocop:enable Metrics/AbcSize
+
+  def open_and_find_option_for(label:, value:)
+    open
+    selector = select_option_selector(label: label, value: value)
+    wait_for_option(selector)
+    option = find_option_element(selector, label)
+    option_value = option['data-value']
+    [option, option_value]
+  end
+
+  def perform_option_deselection(option, label, option_value)
+    click_option_element(option)
+    return unless option_selected?(option, label, option_value)
+
+    option_text = option.first("[data-testid='option-presentation-text']", minimum: 0)
+    click_option_element(option_text) if option_text
+    return unless option_selected?(option, label, option_value)
+
+    option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
+    click_option_element(option_presentation) if option_presentation
+    return unless option_selected?(option, label, option_value)
+
+    click_option_element(option)
+  end
 
   def wait_for_selected_value_or_label(label, value, allow_blank: false)
     wait_for_expect do
@@ -452,6 +469,10 @@ private
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
+  end
+
+  def option_selected?(option, label, option_value)
+    option['data-selected'] == 'true' || selected?(label, option_value)
   end
 
   def click_target_element(click_target)

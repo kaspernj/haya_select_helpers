@@ -1,3 +1,6 @@
+artifact_dirs:
+  - /home/build/project/spec/dummy/tmp/capybara
+  - /home/build/project/spec/dummy/log
 rvm: true
 builds:
   rubocop:
