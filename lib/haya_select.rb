@@ -468,7 +468,12 @@ private
   def click_option_element(element)
     raise ArgumentError, "Expected a clickable option element, got nil" if element.nil?
 
-    element.native.location_once_scrolled_into_view
+    begin
+      element.native.location_once_scrolled_into_view
+    rescue Selenium::WebDriver::Error::ElementNotInteractableError
+      nil
+    end
+
     element.click
   end
 
