@@ -7,7 +7,7 @@ RSpec.describe HayaSelect do
       native = instance_double(Selenium::WebDriver::Element)
       element = instance_double(Capybara::Node::Element, native: native)
 
-      allow(native).to receive(:location_once_scrolled_into_view)
+      expect(native).to receive(:location_once_scrolled_into_view)
         .and_raise(Selenium::WebDriver::Error::ElementNotInteractableError)
       expect(element).to receive(:click)
 
