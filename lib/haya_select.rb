@@ -34,7 +34,7 @@ class HayaSelect
   end
 
   def open(allow_if_open: false)
-    if scope.page.has_selector?(options_selector, visible: :all)
+    if scope.page.has_selector?(options_selector, visible: :all, wait: 0)
       return self if allow_if_open
 
       raise "Expected haya-select '#{base_selector}' to be closed, but it was already open"
