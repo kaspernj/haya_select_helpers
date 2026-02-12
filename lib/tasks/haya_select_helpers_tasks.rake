@@ -1,5 +1,3 @@
-require "open3"
-
 namespace :release do
   desc "Bump patch version and release gem"
   task :patch do
