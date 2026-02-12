@@ -500,8 +500,7 @@ private
 
   def perform_option_selection(option, label, option_value)
     click_option_element(option)
-
-    raise "Expected option to be selected after clicking it" unless selected?(label, option_value)
+    wait_for_selected_value_or_label(label, option_value)
   end
 
   def select_option_container_selector
