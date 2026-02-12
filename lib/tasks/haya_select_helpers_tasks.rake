@@ -1,6 +1,6 @@
 namespace :release do
   desc "Bump patch version and release gem"
-  task :patch do
+  task patch: :environment do
     version_file = File.expand_path("../haya_select_helpers/version.rb", __dir__)
     current_version = File.read(version_file).match(/VERSION\s*=\s*"(\d+\.\d+\.\d+)"/)&.captures&.first
     abort("Could not read current version from #{version_file}") unless current_version
