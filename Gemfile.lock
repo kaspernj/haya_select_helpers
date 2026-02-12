@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    haya_select_helpers (0.0.16)
+    haya_select_helpers (0.0.18)
       rails (>= 7.0.3)
 
 GEM
