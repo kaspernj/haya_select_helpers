@@ -93,16 +93,6 @@ class HayaSelect
     attempts = 0
 
     begin
-      current_value = value_no_wait
-
-      if !value.nil? && current_value == value
-        raise "The '#{label || value}'-option is already selected"
-      end
-
-      if value.nil? && !label.nil? && label_no_wait == label
-        raise "The '#{label}'-option is already selected"
-      end
-
       previous_value = value
       open
       selected_value = select_option_value(label:, value:)
@@ -116,28 +106,6 @@ class HayaSelect
       retry if attempts < 3
       raise
     end
-  end
-
-  def value_no_wait
-    hidden_input = scope.page.first(
-      "#{base_selector} [data-class='current-selected'] input[type='hidden']",
-      visible: false,
-      wait: 0
-    )
-
-    hidden_input ? hidden_input[:value] : nil
-  end
-
-  def label_no_wait
-    current_option = scope.page.first(
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
-      wait: 0
-    )
-
-    return nil unless current_option
-
-    option_text = current_option.first("[data-testid='option-presentation-text']", minimum: 0)
-    option_text ? option_text.text : current_option.text
   end
 
   def deselect(label: nil, value: nil)
