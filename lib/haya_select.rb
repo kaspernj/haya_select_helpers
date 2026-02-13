@@ -89,17 +89,21 @@ class HayaSelect
     retry
   end
 
-  def select(label = nil, value: nil)
+  def select(label = nil, value: nil, allow_if_selected: false)
     attempts = 0
 
     begin
       current_value = value_no_wait
 
       if !value.nil? && current_value == value
+        return self if allow_if_selected
+
         raise "The '#{label || value}'-option is already selected"
       end
 
       if value.nil? && !label.nil? && label_no_wait == label
+        return self if allow_if_selected
+
         raise "The '#{label}'-option is already selected"
       end
 
