@@ -93,21 +93,7 @@ class HayaSelect
     attempts = 0
 
     begin
-      if attempts == 0
-        current_value = value_no_wait
-
-        if !value.nil? && current_value == value
-          return self if allow_if_selected
-
-          raise "The '#{label || value}'-option is already selected"
-        end
-
-        if value.nil? && !label.nil? && label_no_wait == label
-          return self if allow_if_selected
-
-          raise "The '#{label}'-option is already selected"
-        end
-      end
+      guard_already_selected(label, value, allow_if_selected) if attempts.zero?
 
       previous_value = value
       open
@@ -121,6 +107,22 @@ class HayaSelect
       attempts += 1
       retry if attempts < 3
       raise
+    end
+  end
+
+  def guard_already_selected(label, value, allow_if_selected)
+    current_value = value_no_wait
+
+    if !value.nil? && current_value == value
+      return if allow_if_selected
+
+      raise "The '#{label || value}'-option is already selected"
+    end
+
+    if value.nil? && !label.nil? && label_no_wait == label
+      return if allow_if_selected
+
+      raise "The '#{label}'-option is already selected"
     end
   end
 
