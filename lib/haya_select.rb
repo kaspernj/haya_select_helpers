@@ -93,18 +93,20 @@ class HayaSelect
     attempts = 0
 
     begin
-      current_value = value_no_wait
+      if attempts == 0
+        current_value = value_no_wait
 
-      if !value.nil? && current_value == value
-        return self if allow_if_selected
+        if !value.nil? && current_value == value
+          return self if allow_if_selected
 
-        raise "The '#{label || value}'-option is already selected"
-      end
+          raise "The '#{label || value}'-option is already selected"
+        end
 
-      if value.nil? && !label.nil? && label_no_wait == label
-        return self if allow_if_selected
+        if value.nil? && !label.nil? && label_no_wait == label
+          return self if allow_if_selected
 
-        raise "The '#{label}'-option is already selected"
+          raise "The '#{label}'-option is already selected"
+        end
       end
 
       previous_value = value
