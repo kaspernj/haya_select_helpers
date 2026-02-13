@@ -93,17 +93,34 @@ class HayaSelect
     attempts = 0
 
     begin
+      Rails.logger.debug do
+        "[haya_select] select start selector=#{base_selector} " \
+          "label=#{label.inspect} value=#{value.inspect} " \
+          "allow_if_selected=#{allow_if_selected} attempts=#{attempts}"
+      end
       guard_already_selected(label, value, allow_if_selected) if attempts.zero?
 
       previous_value = value
+      Rails.logger.debug { "[haya_select] open selector=#{base_selector}" }
       open
+      Rails.logger.debug { "[haya_select] select_option_value selector=#{base_selector}" }
       selected_value = select_option_value(label:, value:)
+      Rails.logger.debug do
+        "[haya_select] select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
+      end
       selected_value = "" if selected_value.nil? && value.nil?
       allow_blank = previous_value == selected_value
+      Rails.logger.debug { "[haya_select] close_if_open selector=#{base_selector}" }
       close_if_open
+      Rails.logger.debug do
+        "[haya_select] wait_for_selected_value_or_label " \
+          "selector=#{base_selector} label=#{label.inspect} " \
+          "value=#{(value || selected_value).inspect} allow_blank=#{allow_blank}"
+      end
       wait_for_selected_value_or_label(label, value || selected_value, allow_blank:)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+      Rails.logger.debug { "[haya_select] select retry selector=#{base_selector} attempts=#{attempts}" }
       attempts += 1
       retry if attempts < 3
       raise
@@ -180,8 +197,17 @@ class HayaSelect
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
+    Rails.logger.debug do
+      "[haya_select] select_option_value selector=#{base_selector} option_selector=#{selector} label=#{label.inspect} value=#{value.inspect}"
+    end
     wait_for_option(selector)
     option = find_option_element(selector, label)
+    Rails.logger.debug do
+      "[haya_select] option_element selector=#{base_selector} " \
+        "data-value=#{option['data-value'].inspect} " \
+        "data-disabled=#{option['data-disabled'].inspect} " \
+        "data-selected=#{option['data-selected'].inspect}"
+    end
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
@@ -286,8 +312,28 @@ private
   end
 
   def wait_for_selected_value_or_label(label, value, allow_blank: false)
+    Rails.logger.debug do
+      "[haya_select] wait_for_selected_value_or_label start selector=#{base_selector} label=#{label.inspect} value=#{value.inspect} allow_blank=#{allow_blank}"
+    end
+    value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
+    has_value_input_initial = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
+    current_value_initial = scope.page.first(value_input_selector, visible: false, wait: 0)&.[](:value)
+    current_option = scope.page.all(
+      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
+      wait: 0
+    ).first
+    current_label_initial =
+      if current_option
+        option_text = current_option.first("[data-testid='option-presentation-text']", minimum: 0)
+        option_text ? option_text.text : current_option.text
+      end
+    Rails.logger.debug do
+      "[haya_select] wait_for_selected_value_or_label initial " \
+        "selector=#{base_selector} has_value_input=#{has_value_input_initial} " \
+        "current_value=#{current_value_initial.inspect} " \
+        "current_label=#{current_label_initial.inspect}"
+    end
     wait_for_expect do
-      value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
       has_value_input = scope.page.has_selector?(value_input_selector, visible: false)
       label_matches = label && label_matches?(label)
       value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
@@ -539,6 +585,11 @@ private
   end
 
   def perform_option_selection(option, label, option_value)
+    Rails.logger.debug do
+      "[haya_select] perform_option_selection selector=#{base_selector} " \
+        "label=#{label.inspect} option_value=#{option_value.inspect} " \
+        "data-selected=#{option['data-selected'].inspect}"
+    end
     click_option_element(option)
     wait_for_selected_value_or_label(label, option_value)
   end
