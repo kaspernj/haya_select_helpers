@@ -318,10 +318,11 @@ private
     value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
     has_value_input_initial = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
     current_value_initial = scope.page.first(value_input_selector, visible: false, wait: 0)&.[](:value)
-    current_option = scope.page.all(
+    current_option = scope.page.first(
       "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
+      minimum: 0,
       wait: 0
-    ).first
+    )
     current_label_initial =
       if current_option
         option_text = current_option.first("[data-testid='option-presentation-text']", minimum: 0)
