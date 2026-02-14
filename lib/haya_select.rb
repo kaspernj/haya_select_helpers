@@ -108,34 +108,17 @@ class HayaSelect
   end
 
   def guard_already_selected(label, value, allow_if_selected)
-    current_value = value_no_wait
+    return if allow_if_selected
 
-    if !value.nil? && current_value == value
-      return if allow_if_selected
-
-      raise "The '#{label || value}'-option is already selected"
-    end
-
-    if value.nil? && !label.nil? && label_no_wait == label
-      return if allow_if_selected
-
-      raise "The '#{label}'-option is already selected"
-    end
-
-    if value.nil? && !label.nil? && current_value && current_value != ""
-      selected_label = selected_label_for_value(current_value)
-      return unless selected_label == label
-      return if allow_if_selected
-
-      raise "The '#{label}'-option is already selected"
-    end
+    raise_if_value_already_selected(label, value)
+    raise_if_label_already_selected(label, value)
   end
 
   def selected_label_for_value(value)
     return nil if value.nil? || value == ""
 
     was_open = scope.page.has_selector?(options_selector, visible: :all, wait: 0)
-    open(allow_if_open: true)
+    self.open(allow_if_open: true)
 
     begin
       option = scope.page.first(
@@ -272,16 +255,10 @@ class HayaSelect
   def selected?(label, value)
     return false unless label || value
 
-    label_matches = label && label_matches?(label)
-    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
-    return true if label_matches || value_matches
+    return true if label_matches?(label)
+    return true if value_matches?(value)
 
-    if label && value.nil?
-      current_value = value_no_wait
-      return selected_label_for_value(current_value) == label if current_value && current_value != ""
-    end
-
-    false
+    label_matches_selected_value?(label)
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -295,6 +272,43 @@ class HayaSelect
   end
 
 private
+
+  def raise_if_value_already_selected(label, value)
+    return if value.nil?
+
+    current_value = value_no_wait
+    return unless current_value == value
+
+    raise "The '#{label || value}'-option is already selected"
+  end
+
+  def raise_if_label_already_selected(label, value)
+    return if label.nil? || !value.nil?
+    return if label_no_wait == label
+
+    current_value = value_no_wait
+    return if current_value.nil? || current_value == ""
+
+    selected_label = selected_label_for_value(current_value)
+    return unless selected_label == label
+
+    raise "The '#{label}'-option is already selected"
+  end
+
+  def value_matches?(value)
+    return false unless value
+
+    scope.page.has_selector?(current_value_selector(value), visible: false)
+  end
+
+  def label_matches_selected_value?(label)
+    return false unless label
+
+    current_value = value_no_wait
+    return false if current_value.nil? || current_value == ""
+
+    selected_label_for_value(current_value) == label
+  end
 
   def select_option_selector(label:, value:)
     if value
@@ -502,6 +516,8 @@ private
   end
 
   def label_matches?(label)
+    return false unless label
+
     current_option_label_selectors.any? do |selector|
       scope.page.has_selector?(selector, exact_text: label)
     end
