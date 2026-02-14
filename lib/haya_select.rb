@@ -137,15 +137,16 @@ class HayaSelect
     was_open = scope.page.has_selector?(options_selector, visible: :all, wait: 0)
     open(allow_if_open: true)
 
-    option = scope.page.first(
-      "#{options_selector} [data-class='select-option'][data-value='#{value}']",
-      minimum: 0,
-      wait: 0
-    )
-    selected_label = option&.[]("data-text") || option&.text
-    close_if_open unless was_open
-
-    selected_label
+    begin
+      option = scope.page.first(
+        "#{options_selector} [data-class='select-option'][data-value='#{value}']",
+        minimum: 0,
+        wait: 0
+      )
+      option&.[]("data-text") || option&.text
+    ensure
+      close_if_open unless was_open
+    end
   end
 
   def value_no_wait
