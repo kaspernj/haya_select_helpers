@@ -677,12 +677,31 @@ private
 
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
-    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
-    blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
-    return value_matches || blank_matches if has_value_input
+    value_matches = current_value_matches?(value)
+    selected_option_matches = selected_option_matches?(value)
+    blank_matches = blank_value_matches?(allow_blank)
+    return value_matches || selected_option_matches || blank_matches if has_value_input
 
     label_matches = label && label_matches?(label)
-    label_matches || value_matches || blank_matches
+    label_matches || value_matches || selected_option_matches || blank_matches
+  end
+
+  def current_value_matches?(value)
+    value && scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
+  end
+
+  def selected_option_matches?(value)
+    return false unless value
+
+    scope.page.has_selector?(
+      "#{select_option_container_selector}[data-value='#{value}'][data-selected='true']",
+      visible: :all,
+      wait: 0
+    )
+  end
+
+  def blank_value_matches?(allow_blank)
+    allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation

@@ -5,6 +5,30 @@ class HayaSelectSpecScope
 end
 
 describe HayaSelect do
+  describe "#selected_value_or_label_matches?" do
+    it "accepts selected option state while hidden input has not updated yet" do
+      page = instance_double(Capybara::Session)
+      scope = instance_double(HayaSelectSpecScope, page: page)
+      select = HayaSelect.new(id: "example", scope: scope)
+      value_input_selector = "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] input[type='hidden']"
+      current_value_selector = "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] input[type='hidden'][value='norway']"
+      selected_option_selector = "[data-class='options-container'][data-id='example'] [data-class='select-option'][data-value='norway'][data-selected='true']"
+
+      expect(page).to receive(:has_selector?).with(value_input_selector, visible: false, wait: 0).and_return(true)
+      expect(page).to receive(:has_selector?).with(current_value_selector, visible: false, wait: 0).and_return(false)
+      expect(page).to receive(:has_selector?).with(selected_option_selector, visible: :all, wait: 0).and_return(true)
+      matches = select.__send__(
+        :selected_value_or_label_matches?,
+        label: "Norway",
+        value: "norway",
+        allow_blank: false,
+        value_input_selector:
+      )
+
+      expect(matches).to be true
+    end
+  end
+
   describe "#log_wait_for_selected_initial_state" do
     it "does not raise when hidden input is missing" do
       page = instance_double(Capybara::Session)
