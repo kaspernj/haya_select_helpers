@@ -5,6 +5,22 @@ class HayaSelectSpecScope
 end
 
 describe HayaSelect do
+  describe "#label_matches?" do
+    it "matches by option data-text when rendered text differs" do
+      page = instance_double(Capybara::Session)
+      scope = instance_double(HayaSelectSpecScope, page: page)
+      select = HayaSelect.new(id: "example", scope: scope)
+
+      expect(page).to receive(:has_selector?).with(
+        "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] [data-testid='option-presentation'][data-text='Denmark +45']",
+        wait: 0
+      ).and_return(true)
+
+      matches = select.__send__(:label_matches?, "Denmark +45")
+      expect(matches).to be true
+    end
+  end
+
   describe "#selected_value_or_label_matches?" do
     it "accepts selected option state while hidden input has not updated yet" do
       page = instance_double(Capybara::Session)

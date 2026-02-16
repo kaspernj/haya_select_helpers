@@ -522,6 +522,10 @@ private
 
   def label_matches?(label)
     return false unless label
+    return true if scope.page.has_selector?(
+      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation'][data-text='#{label}']",
+      wait: 0
+    )
 
     current_option_label_selectors.any? do |selector|
       scope.page.has_selector?(selector, exact_text: label, wait: 0)
