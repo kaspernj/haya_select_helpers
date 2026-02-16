@@ -4,7 +4,7 @@ class HayaSelectSpecScope
   attr_reader :page
 end
 
-RSpec.describe HayaSelect do
+describe HayaSelect do
   describe "#value_no_wait" do
     it "returns nil when the hidden input is missing" do
       page = instance_double(Capybara::Session)

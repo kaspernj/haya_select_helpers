@@ -4,3 +4,4 @@ Notes
 - Avoid layered waits (for example `has_selector?` followed by `wait_for_and_find` on the same selector with default wait).
 - In specs, prefer explicit class names (e.g. `HayaSelect`) over `described_class`.
 - Prefer `__send__(:method_name)` over `send(:method_name)`.
+- In spec files, prefer `describe` over `RSpec.describe`.

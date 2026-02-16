@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "dummy app haya-select routes" do
+describe "dummy app haya-select routes" do
   it "shows the React router home page" do
     visit "/"
 
@@ -29,8 +29,12 @@ RSpec.describe "dummy app haya-select routes" do
   it "can select an option with haya-select in the v1.0.96 route" do
     visit "/haya-select/v096"
 
-    find("[data-component='haya-select'][data-id='fruit_select_v096'] [data-class='current-selected']").click
-    find("[data-class='options-container'][data-id='fruit_select_v096'] [data-testid='option-presentation'][data-text='Banana']").click
+    find("[data-component='haya-select'][data-id='fruit_select_v096'] [data-class='select-container']").click
+    expect(page).to have_css("[data-class='options-container'][data-id='fruit_select_v096']", visible: :all)
+    find(
+      "[data-class='options-container'][data-id='fruit_select_v096'] [data-testid='option-presentation'][data-text='Banana']",
+      visible: :all
+    ).click
 
     expect(page).to have_css(
       "[data-component='haya-select'][data-id='fruit_select_v096'] [data-class='current-option'] [data-text='Banana'][data-value='banana']"
