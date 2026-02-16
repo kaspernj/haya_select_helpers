@@ -357,6 +357,12 @@ private
     log_wait_for_selected_start(label, value, allow_blank)
     value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
     log_wait_for_selected_initial_state(value_input_selector)
+
+    if scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
+      return wait_for_selector(current_value_selector(value), visible: false) if value
+      return wait_for_selector(current_value_selector(""), visible: false) if allow_blank
+    end
+
     wait_for_expect do
       expect(
         selected_value_or_label_matches?(
@@ -680,10 +686,10 @@ private
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
     value_matches = current_value_matches?(value)
-    selected_option_matches = selected_option_matches?(value)
     blank_matches = blank_value_matches?(allow_blank)
-    return value_matches || selected_option_matches || blank_matches if has_value_input
+    return value_matches || blank_matches if has_value_input
 
+    selected_option_matches = selected_option_matches?(value)
     label_matches = label && label_matches?(label)
     label_matches || value_matches || selected_option_matches || blank_matches
   end
