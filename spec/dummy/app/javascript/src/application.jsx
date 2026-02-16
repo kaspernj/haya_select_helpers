@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import HayaSelectV092 from "haya-select-v092/build/select";
@@ -12,7 +12,8 @@ import versionV096 from "haya-select-v096/package.json";
 const routes = [
   { path: "/haya-select/v092", label: "haya-select 1.0.92", version: versionV092.version, component: HayaSelectV092, id: "fruit_select_v092" },
   { path: "/haya-select/v094", label: "haya-select 1.0.94", version: versionV094.version, component: HayaSelectV094, id: "fruit_select_v094" },
-  { path: "/haya-select/v096", label: "haya-select 1.0.96", version: versionV096.version, component: HayaSelectV096, id: "fruit_select_v096" }
+  { path: "/haya-select/v096", label: "haya-select 1.0.96", version: versionV096.version, component: HayaSelectV096, id: "fruit_select_v096" },
+  { path: "/haya-select/v096-delayed", label: "haya-select 1.0.96 delayed", version: versionV096.version, component: HayaSelectV096, id: "fruit_select_v096_delayed", delayedMount: true }
 ];
 
 function Header() {
@@ -39,23 +40,41 @@ function HomePage() {
   );
 }
 
-function VersionPage({ component: HayaSelectComponent, id, label, version }) {
+function VersionPage({ component: HayaSelectComponent, delayedMount, id, label, version }) {
+  const [showSelect, setShowSelect] = useState(!delayedMount);
+
+  useEffect(() => {
+    if (!delayedMount) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setShowSelect(true);
+    }, 200);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [delayedMount]);
+
   return (
     <main>
       <h2>{label}</h2>
       <p data-testid="haya-select-version">Installed package version: {version}</p>
       <div style={{ maxWidth: "420px", marginTop: "10px" }}>
-        <HayaSelectComponent
-          id={id}
-          multiple={false}
-          optionsPortal={false}
-          options={[
-            { value: "apple", text: "Apple" },
-            { value: "banana", text: "Banana" },
-            { value: "cherry", text: "Cherry" }
-          ]}
-          placeholder="Choose fruit"
-        />
+        {showSelect && (
+          <HayaSelectComponent
+            id={id}
+            multiple={false}
+            optionsPortal={false}
+            options={[
+              { value: "apple", text: "Apple" },
+              { value: "banana", text: "Banana" },
+              { value: "cherry", text: "Cherry" }
+            ]}
+            placeholder="Choose fruit"
+          />
+        )}
       </div>
     </main>
   );
@@ -72,7 +91,15 @@ function App() {
             <Route
               key={route.path}
               path={route.path}
-              element={<VersionPage component={route.component} id={route.id} label={route.label} version={route.version} />}
+              element={
+                <VersionPage
+                  component={route.component}
+                  delayedMount={route.delayedMount}
+                  id={route.id}
+                  label={route.label}
+                  version={route.version}
+                />
+              }
             />
           ))}
         </Routes>

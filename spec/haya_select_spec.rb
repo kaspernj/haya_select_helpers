@@ -1,10 +1,14 @@
 require "rails_helper"
 
+class HayaSelectSpecScope
+  attr_reader :page
+end
+
 RSpec.describe HayaSelect do
   describe "#value_no_wait" do
     it "returns nil when the hidden input is missing" do
       page = instance_double(Capybara::Session)
-      scope = instance_double("Scope", page: page)
+      scope = instance_double(HayaSelectSpecScope, page: page)
 
       expect(page).to receive(:first).with(
         "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] input[type='hidden']",
@@ -13,7 +17,7 @@ RSpec.describe HayaSelect do
         wait: 0
       ).and_return(nil)
 
-      value = described_class.new(id: "example", scope: scope).send(:value_no_wait)
+      value = HayaSelect.new(id: "example", scope: scope).__send__(:value_no_wait)
       expect(value).to be_nil
     end
   end
@@ -29,7 +33,7 @@ RSpec.describe HayaSelect do
       expect(element).to receive(:click)
 
       expect do
-        described_class.new(id: "example", scope: scope).send(:click_option_element, element)
+        HayaSelect.new(id: "example", scope: scope).__send__(:click_option_element, element)
       end.not_to raise_error
     end
   end
