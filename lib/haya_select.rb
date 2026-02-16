@@ -655,7 +655,7 @@ private
 
   def log_wait_for_selected_initial_state(value_input_selector)
     has_value_input_initial = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
-    current_value_initial = scope.page.first(value_input_selector, visible: false, wait: 0)&.[](:value)
+    current_value_initial = scope.page.first(value_input_selector, minimum: 0, visible: false, wait: 0)&.[](:value)
     current_option = scope.page.first(
       "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
       minimum: 0,
