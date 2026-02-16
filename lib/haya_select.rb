@@ -135,6 +135,7 @@ class HayaSelect
   def value_no_wait
     hidden_input = scope.page.first(
       "#{base_selector} [data-class='current-selected'] input[type='hidden']",
+      minimum: 0,
       visible: false,
       wait: 0
     )
