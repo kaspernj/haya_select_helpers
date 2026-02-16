@@ -454,9 +454,7 @@ private
   end
 
   def wait_for_open
-    wait_for_browser(message: "waiting for haya-select options container to open") do
-      scope.page.has_selector?(options_selector, visible: :all)
-    end
+    wait_for_selector(options_selector, visible: :all)
   end
 
   def click_element_safely(element)
