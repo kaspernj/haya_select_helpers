@@ -145,6 +145,7 @@ class HayaSelect
   def label_no_wait
     current_option = scope.page.first(
       "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
+      minimum: 0,
       wait: 0
     )
 
@@ -284,7 +285,10 @@ private
 
   def raise_if_label_already_selected(label, value)
     return if label.nil? || !value.nil?
-    return if label_no_wait == label
+
+    current_label = label_no_wait
+    return if current_label == label
+    return if current_label
 
     current_value = value_no_wait
     return if current_value.nil? || current_value == ""
@@ -298,7 +302,7 @@ private
   def value_matches?(value)
     return false unless value
 
-    scope.page.has_selector?(current_value_selector(value), visible: false)
+    scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
   end
 
   def label_matches_selected_value?(label)
@@ -365,13 +369,13 @@ private
   end
 
   def search_for_option(label)
-    return unless scope.page.has_selector?(search_input_selector)
+    return unless scope.page.has_selector?(search_input_selector, wait: 0)
 
     search(label)
   end
 
   def options_container_updated?(search_term, previous_text)
-    return false unless scope.page.has_selector?(no_options_selector)
+    return false unless scope.page.has_selector?(no_options_selector, wait: 0)
     return false unless search_input_value == search_term
     return false if previous_text.nil?
 
@@ -397,18 +401,18 @@ private
   end
 
   def close_if_open
-    return if scope.page.has_no_selector?(options_selector, visible: :all)
+    return if scope.page.has_no_selector?(options_selector, visible: :all, wait: 0)
 
     close_attempts = 0
 
-    while scope.page.has_selector?(options_selector, visible: :all) && close_attempts < 3
+    while scope.page.has_selector?(options_selector, visible: :all, wait: 0) && close_attempts < 3
       close_attempt
       break if wait_for_close?
 
       close_attempts += 1
     end
 
-    return if scope.page.has_no_selector?(options_selector, visible: :all)
+    return if scope.page.has_no_selector?(options_selector, visible: :all, wait: 0)
 
     body = wait_for_and_find("body")
     body.send_keys(:escape)
@@ -428,9 +432,9 @@ private
 
   def click_open_target_element
     target_selector =
-      if scope.page.has_selector?(select_container_selector)
+      if scope.page.has_selector?(select_container_selector, wait: 0)
         select_container_selector
-      elsif scope.page.has_selector?(current_selected_selector)
+      elsif scope.page.has_selector?(current_selected_selector, wait: 0)
         current_selected_selector
       else
         base_selector
@@ -473,7 +477,7 @@ private
   end
 
   def close_search_input
-    return unless scope.page.has_selector?(search_input_selector)
+    return unless scope.page.has_selector?(search_input_selector, wait: 0)
 
     search_input = wait_for_and_find(search_input_selector)
     click_element_safely(search_input)
@@ -501,7 +505,7 @@ private
   end
 
   def send_open_key
-    return unless scope.page.has_selector?(select_container_selector)
+    return unless scope.page.has_selector?(select_container_selector, wait: 0)
 
     select_container = wait_for_and_find(select_container_selector)
     select_container.send_keys(:enter)
@@ -519,7 +523,7 @@ private
     return false unless label
 
     current_option_label_selectors.any? do |selector|
-      scope.page.has_selector?(selector, exact_text: label)
+      scope.page.has_selector?(selector, exact_text: label, wait: 0)
     end
   end
 
@@ -540,8 +544,8 @@ private
   end
 
   def option_present?(selector, label)
-    scope.page.has_selector?(selector, visible: :all) ||
-      scope.page.has_selector?(option_label_selector, text: label, visible: :all)
+    scope.page.has_selector?(selector, visible: :all, wait: 0) ||
+      scope.page.has_selector?(option_label_selector, text: label, visible: :all, wait: 0)
   end
 
   def find_option_element(selector, label)
@@ -554,7 +558,7 @@ private
       return option_presentation.find(:xpath, "./ancestor::*[@data-class='select-option']")
     end
 
-    return wait_for_and_find(selector) if scope.page.has_selector?(selector)
+    return wait_for_and_find(selector) if scope.page.has_selector?(selector, wait: 0)
 
     option_text = wait_for_and_find(option_label_selector, text: label)
     option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
@@ -671,9 +675,9 @@ private
   end
 
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)
-    has_value_input = scope.page.has_selector?(value_input_selector, visible: false)
-    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false)
-    blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false)
+    has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
+    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
+    blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
     return value_matches || blank_matches if has_value_input
 
     label_matches = label && label_matches?(label)
