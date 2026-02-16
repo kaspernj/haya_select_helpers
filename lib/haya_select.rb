@@ -357,6 +357,12 @@ private
     log_wait_for_selected_start(label, value, allow_blank)
     value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
     log_wait_for_selected_initial_state(value_input_selector)
+
+    if scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
+      return wait_for_selector(current_value_selector(value), visible: false) if value
+      return wait_for_selector(current_value_selector(""), visible: false) if allow_blank
+    end
+
     wait_for_expect do
       expect(
         selected_value_or_label_matches?(
@@ -454,9 +460,7 @@ private
   end
 
   def wait_for_open
-    wait_for_browser(message: "waiting for haya-select options container to open") do
-      scope.page.has_selector?(options_selector, visible: :all)
-    end
+    wait_for_selector(options_selector, visible: :all)
   end
 
   def click_element_safely(element)
@@ -522,6 +526,10 @@ private
 
   def label_matches?(label)
     return false unless label
+    return true if scope.page.has_selector?(
+      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation'][data-text='#{label}']",
+      wait: 0
+    )
 
     current_option_label_selectors.any? do |selector|
       scope.page.has_selector?(selector, exact_text: label, wait: 0)
@@ -677,12 +685,31 @@ private
 
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
-    value_matches = value && scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
-    blank_matches = allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
+    value_matches = current_value_matches?(value)
+    blank_matches = blank_value_matches?(allow_blank)
     return value_matches || blank_matches if has_value_input
 
+    selected_option_matches = selected_option_matches?(value)
     label_matches = label && label_matches?(label)
-    label_matches || value_matches || blank_matches
+    label_matches || value_matches || selected_option_matches || blank_matches
+  end
+
+  def current_value_matches?(value)
+    value && scope.page.has_selector?(current_value_selector(value), visible: false, wait: 0)
+  end
+
+  def selected_option_matches?(value)
+    return false unless value
+
+    scope.page.has_selector?(
+      "#{select_option_container_selector}[data-value='#{value}'][data-selected='true']",
+      visible: :all,
+      wait: 0
+    )
+  end
+
+  def blank_value_matches?(allow_blank)
+    allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
