@@ -45,7 +45,7 @@ class HayaSelect
     attempts = 0
 
     begin
-      wait_for_selector("#{base_selector}[data-opened='false']", timeout: 3)
+      wait_for_selector("#{base_selector}[data-opened='false']", wait: 3)
       click_open_target_element
       wait_for_open
       self
