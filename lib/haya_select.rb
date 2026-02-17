@@ -46,7 +46,6 @@ class HayaSelect
 
     begin
       wait_for_selector("#{base_selector}[data-opened='false']")
-      wait_for_no_selector(options_selector, visible: :all)
       click_open_target_element
       wait_for_open
       self
