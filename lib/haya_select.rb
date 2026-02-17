@@ -316,6 +316,9 @@ private
   def label_matches_selected_value?(label)
     return false unless label
 
+    current_label = label_no_wait
+    return current_label == label if current_label
+
     current_value = value_no_wait
     return false if current_value.nil? || current_value == ""
 
