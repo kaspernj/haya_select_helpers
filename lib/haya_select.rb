@@ -45,7 +45,7 @@ class HayaSelect
     attempts = 0
 
     begin
-      wait_for_selector("#{base_selector}[data-opened='false']")
+      wait_for_selector("#{base_selector}[data-opened='false']", timeout: 3)
       click_open_target_element
       wait_for_open
       self
@@ -647,10 +647,10 @@ private
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
     value_matches = current_value_matches?(value)
     blank_matches = blank_value_matches?(allow_blank)
-    return value_matches || blank_matches if has_value_input
-
     selected_option_matches = selected_option_matches?(value)
     label_matches = label && label_matches?(label)
+    return value_matches || label_matches || selected_option_matches || blank_matches if has_value_input
+
     label_matches || value_matches || selected_option_matches || blank_matches
   end
 
