@@ -589,7 +589,10 @@ private
 
   def selected_option_value_or_raise(option:, label:, value:, allow_if_selected:)
     return unless option['data-selected'] == 'true'
-    return option["data-value"] if allow_if_selected
+
+    option_value = option["data-value"] || value
+    return unless selected?(label, option_value)
+    return option_value if allow_if_selected
 
     raise "The '#{label || value}'-option is already selected"
   end
