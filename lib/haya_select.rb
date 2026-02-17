@@ -96,7 +96,7 @@ class HayaSelect
 
     begin
       debug_log do
-        "[haya_select] select start selector=#{base_selector} " \
+        "select start selector=#{base_selector} " \
           "label=#{label.inspect} value=#{value.inspect} " \
           "allow_if_selected=#{allow_if_selected} attempts=#{attempts}"
       end
@@ -106,7 +106,7 @@ class HayaSelect
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
-      debug_log { "[haya_select] select retry selector=#{base_selector} attempts=#{attempts}" }
+      debug_log { "select retry selector=#{base_selector} attempts=#{attempts}" }
       attempts += 1
       retry if attempts < 3
       raise
@@ -195,13 +195,13 @@ class HayaSelect
 
     selector = select_option_selector(label: label, value: value)
     debug_log do
-      "[haya_select] select_option_value selector=#{base_selector} " \
+      "select_option_value selector=#{base_selector} " \
         "option_selector=#{selector} label=#{label.inspect} value=#{value.inspect}"
     end
     wait_for_option(selector)
     option = find_option_element(selector, label)
     debug_log do
-      "[haya_select] option_element selector=#{base_selector} " \
+      "option_element selector=#{base_selector} " \
         "data-value=#{option['data-value'].inspect} " \
         "data-disabled=#{option['data-disabled'].inspect} " \
         "data-selected=#{option['data-selected'].inspect}"
@@ -609,7 +609,7 @@ private
 
   def perform_option_selection(option, label, option_value, wait_for_selection: true)
     debug_log do
-      "[haya_select] perform_option_selection selector=#{base_selector} " \
+      "perform_option_selection selector=#{base_selector} " \
         "label=#{label.inspect} option_value=#{option_value.inspect} " \
         "data-selected=#{option['data-selected'].inspect} wait_for_selection=#{wait_for_selection}"
     end
@@ -623,15 +623,15 @@ private
 
   def select_value_and_close(label:, value:)
     previous_value = value
-    debug_log { "[haya_select] open selector=#{base_selector}" }
+    debug_log { "open selector=#{base_selector}" }
     open
     selected_value = select_option_value(label:, value:, wait_for_selection: false)
     debug_log do
-      "[haya_select] select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
+      "select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
     end
     selected_value = "" if selected_value.nil? && value.nil?
     allow_blank = previous_value == selected_value
-    debug_log { "[haya_select] close_if_open selector=#{base_selector}" }
+    debug_log { "close_if_open selector=#{base_selector}" }
     close_if_open
     [selected_value, allow_blank]
   end
@@ -639,7 +639,7 @@ private
   def wait_for_selected_after_select(label, value, selected_value, allow_blank)
     expected_value = value || selected_value
     debug_log do
-      "[haya_select] wait_for_selected_value_or_label selector=#{base_selector} " \
+      "wait_for_selected_value_or_label selector=#{base_selector} " \
         "label=#{label.inspect} value=#{expected_value.inspect} allow_blank=#{allow_blank}"
     end
     wait_for_selected_value_or_label(label, expected_value, allow_blank:)
@@ -648,7 +648,7 @@ private
   def debug_log(&)
     return unless debug
 
-    Rails.logger.debug(&)
+    Rails.logger.debug { "[haya_select] #{yield}" }
   end
 
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)
