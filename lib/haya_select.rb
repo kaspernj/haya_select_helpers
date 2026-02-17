@@ -101,6 +101,7 @@ class HayaSelect
           "allow_if_selected=#{allow_if_selected} attempts=#{attempts}"
       end
       guard_already_selected(label, value, allow_if_selected) if attempts.zero?
+      return self if attempts.positive? && selected?(label, value)
 
       selected_value, allow_blank = select_value_and_close(label:, value:, allow_if_selected:)
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
@@ -634,11 +635,11 @@ private
     "#{options_selector} [data-class='select-option']"
   end
 
-  def select_value_and_close(label:, value:, allow_if_selected:)
+  def select_value_and_close(label:, value:, allow_if_selected: false)
     previous_value = value
     debug_log { "open selector=#{base_selector}" }
     open
-    selected_value = select_option_value(label:, value:, wait_for_selection: false, allow_if_selected:)
+    selected_value = select_option_value(label:, value:, wait_for_selection: false, **select_option_value_allow_args(allow_if_selected))
     debug_log do
       "select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
     end
@@ -668,10 +669,10 @@ private
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
     value_matches = current_value_matches?(value)
     blank_matches = blank_value_matches?(allow_blank)
-    selected_option_matches = selected_option_matches?(value)
     label_matches = label && label_matches?(label)
-    return value_matches || label_matches || selected_option_matches || blank_matches if has_value_input
+    return value_matches || label_matches || blank_matches if has_value_input
 
+    selected_option_matches = selected_option_matches?(value)
     label_matches || value_matches || selected_option_matches || blank_matches
   end
 
@@ -691,6 +692,12 @@ private
 
   def blank_value_matches?(allow_blank)
     allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
+  end
+
+  def select_option_value_allow_args(allow_if_selected)
+    return {} unless allow_if_selected
+
+    {allow_if_selected:}
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
