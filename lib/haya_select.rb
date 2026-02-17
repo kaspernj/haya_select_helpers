@@ -3,6 +3,7 @@
 # rubocop:disable Metrics/ClassLength, Style/Documentation
 class HayaSelect
   attr_reader :base_selector,
+    :debug,
     :not_opened_current_selected_selector,
     :opened_current_selected_selector,
     :options_selector,
@@ -19,8 +20,9 @@ class HayaSelect
     :wait_for_selector,
     to: :scope
 
-  def initialize(id:, scope:)
+  def initialize(id:, scope:, debug: false)
     @base_selector = "[data-component='haya-select'][data-id='#{id}']"
+    @debug = debug
     @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] [data-class='current-selected']"
     @opened_current_selected_selector = "#{base_selector}[data-opened='true'] [data-class='current-selected']"
     @options_selector = "[data-class='options-container'][data-id='#{id}']"
@@ -93,12 +95,18 @@ class HayaSelect
     attempts = 0
 
     begin
+      debug_log do
+        "[haya_select] select start selector=#{base_selector} " \
+          "label=#{label.inspect} value=#{value.inspect} " \
+          "allow_if_selected=#{allow_if_selected} attempts=#{attempts}"
+      end
       guard_already_selected(label, value, allow_if_selected) if attempts.zero?
 
       selected_value, allow_blank = select_value_and_close(label:, value:)
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+      debug_log { "[haya_select] select retry selector=#{base_selector} attempts=#{attempts}" }
       attempts += 1
       retry if attempts < 3
       raise
@@ -186,8 +194,18 @@ class HayaSelect
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
+    debug_log do
+      "[haya_select] select_option_value selector=#{base_selector} " \
+        "option_selector=#{selector} label=#{label.inspect} value=#{value.inspect}"
+    end
     wait_for_option(selector)
     option = find_option_element(selector, label)
+    debug_log do
+      "[haya_select] option_element selector=#{base_selector} " \
+        "data-value=#{option['data-value'].inspect} " \
+        "data-disabled=#{option['data-disabled'].inspect} " \
+        "data-selected=#{option['data-selected'].inspect}"
+    end
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
 
@@ -590,6 +608,11 @@ private
   end
 
   def perform_option_selection(option, label, option_value, wait_for_selection: true)
+    debug_log do
+      "[haya_select] perform_option_selection selector=#{base_selector} " \
+        "label=#{label.inspect} option_value=#{option_value.inspect} " \
+        "data-selected=#{option['data-selected'].inspect} wait_for_selection=#{wait_for_selection}"
+    end
     click_option_element(option)
     wait_for_selected_value_or_label(label, option_value) if wait_for_selection
   end
@@ -600,17 +623,32 @@ private
 
   def select_value_and_close(label:, value:)
     previous_value = value
+    debug_log { "[haya_select] open selector=#{base_selector}" }
     open
     selected_value = select_option_value(label:, value:, wait_for_selection: false)
+    debug_log do
+      "[haya_select] select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
+    end
     selected_value = "" if selected_value.nil? && value.nil?
     allow_blank = previous_value == selected_value
+    debug_log { "[haya_select] close_if_open selector=#{base_selector}" }
     close_if_open
     [selected_value, allow_blank]
   end
 
   def wait_for_selected_after_select(label, value, selected_value, allow_blank)
     expected_value = value || selected_value
+    debug_log do
+      "[haya_select] wait_for_selected_value_or_label selector=#{base_selector} " \
+        "label=#{label.inspect} value=#{expected_value.inspect} allow_blank=#{allow_blank}"
+    end
     wait_for_selected_value_or_label(label, expected_value, allow_blank:)
+  end
+
+  def debug_log(&)
+    return unless debug
+
+    Rails.logger.debug(&)
   end
 
   def selected_value_or_label_matches?(label:, value:, allow_blank:, value_input_selector:)

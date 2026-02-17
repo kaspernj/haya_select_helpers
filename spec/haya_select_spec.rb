@@ -133,4 +133,22 @@ describe HayaSelect do
       end.not_to raise_error
     end
   end
+
+  describe "#debug_log" do
+    it "does not log when debug is false" do
+      scope = instance_double(HayaSelectSpecScope)
+      select = HayaSelect.new(id: "example", scope: scope, debug: false)
+
+      expect(Rails.logger).not_to receive(:debug)
+      select.__send__(:debug_log) { "hello" }
+    end
+
+    it "logs when debug is true" do
+      scope = instance_double(HayaSelectSpecScope)
+      select = HayaSelect.new(id: "example", scope: scope, debug: true)
+
+      expect(Rails.logger).to receive(:debug)
+      select.__send__(:debug_log) { "hello" }
+    end
+  end
 end
