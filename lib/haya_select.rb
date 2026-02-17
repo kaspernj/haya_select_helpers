@@ -45,12 +45,13 @@ class HayaSelect
     attempts = 0
 
     begin
+      wait_for_selector("#{base_selector}[data-opened='false']")
+      wait_for_no_selector(options_selector, visible: :all)
       click_open_target_element
       wait_for_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
-      send_open_key
       retry if attempts < 3
       raise "Failed to open haya-select options for '#{base_selector}' (options container not found)"
     end
@@ -512,14 +513,6 @@ private
     )
     close_target ||= wait_for_and_find("body")
     scope.page.driver.browser.action.move_to(close_target.native).click.perform
-  end
-
-  def send_open_key
-    return unless scope.page.has_selector?(select_container_selector, wait: 0)
-
-    select_container = wait_for_and_find(select_container_selector)
-    select_container.send_keys(:enter)
-    select_container.send_keys(:space)
   end
 
   def current_option_label_selectors
