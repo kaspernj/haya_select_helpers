@@ -102,7 +102,7 @@ class HayaSelect
       end
       guard_already_selected(label, value, allow_if_selected) if attempts.zero?
 
-      selected_value, allow_blank = select_value_and_close(label:, value:)
+      selected_value, allow_blank = select_value_and_close(label:, value:, allow_if_selected:)
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -190,7 +190,7 @@ class HayaSelect
     retry
   end
 
-  def select_option_value(label: nil, value: nil, wait_for_selection: true)
+  def select_option_value(label: nil, value: nil, wait_for_selection: true, allow_if_selected: false)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
@@ -208,6 +208,14 @@ class HayaSelect
     end
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
+
+    selected_option_value = selected_option_value_or_raise(
+      option:,
+      label:,
+      value:,
+      allow_if_selected:
+    )
+    return selected_option_value if selected_option_value
 
     option_value = option['data-value']
     perform_option_selection(option, label, option_value, wait_for_selection:)
@@ -579,6 +587,13 @@ private
     option['data-selected'] == 'true' || selected?(label, option_value)
   end
 
+  def selected_option_value_or_raise(option:, label:, value:, allow_if_selected:)
+    return unless option['data-selected'] == 'true'
+    return option["data-value"] if allow_if_selected
+
+    raise "The '#{label || value}'-option is already selected"
+  end
+
   def click_target_element(click_target)
     unless click_target.visible?
       scope.page.execute_script(
@@ -616,11 +631,11 @@ private
     "#{options_selector} [data-class='select-option']"
   end
 
-  def select_value_and_close(label:, value:)
+  def select_value_and_close(label:, value:, allow_if_selected:)
     previous_value = value
     debug_log { "open selector=#{base_selector}" }
     open
-    selected_value = select_option_value(label:, value:, wait_for_selection: false)
+    selected_value = select_option_value(label:, value:, wait_for_selection: false, allow_if_selected:)
     debug_log do
       "select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
     end
