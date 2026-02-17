@@ -45,12 +45,12 @@ class HayaSelect
     attempts = 0
 
     begin
+      wait_for_selector("#{base_selector}[data-opened='false']", wait: 3)
       click_open_target_element
       wait_for_open
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
-      send_open_key
       retry if attempts < 3
       raise "Failed to open haya-select options for '#{base_selector}' (options container not found)"
     end
@@ -101,8 +101,9 @@ class HayaSelect
           "allow_if_selected=#{allow_if_selected} attempts=#{attempts}"
       end
       guard_already_selected(label, value, allow_if_selected) if attempts.zero?
+      return self if attempts.positive? && selected?(label, value)
 
-      selected_value, allow_blank = select_value_and_close(label:, value:)
+      selected_value, allow_blank = select_value_and_close(label:, value:, allow_if_selected:)
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
       self
     rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
@@ -190,7 +191,7 @@ class HayaSelect
     retry
   end
 
-  def select_option_value(label: nil, value: nil, wait_for_selection: true)
+  def select_option_value(label: nil, value: nil, wait_for_selection: true, allow_if_selected: false)
     raise "No 'label' or 'value' given" if label.nil? && value.nil?
 
     selector = select_option_selector(label: label, value: value)
@@ -208,6 +209,14 @@ class HayaSelect
     end
 
     raise "The '#{label}'-option is disabled" if option['data-disabled'] == 'true'
+
+    selected_option_value = selected_option_value_or_raise(
+      option:,
+      label:,
+      value:,
+      allow_if_selected:
+    )
+    return selected_option_value if selected_option_value
 
     option_value = option['data-value']
     perform_option_selection(option, label, option_value, wait_for_selection:)
@@ -315,6 +324,9 @@ private
 
   def label_matches_selected_value?(label)
     return false unless label
+
+    current_label = label_no_wait
+    return current_label == label if current_label
 
     current_value = value_no_wait
     return false if current_value.nil? || current_value == ""
@@ -514,14 +526,6 @@ private
     scope.page.driver.browser.action.move_to(close_target.native).click.perform
   end
 
-  def send_open_key
-    return unless scope.page.has_selector?(select_container_selector, wait: 0)
-
-    select_container = wait_for_and_find(select_container_selector)
-    select_container.send_keys(:enter)
-    select_container.send_keys(:space)
-  end
-
   def current_option_label_selectors
     [
       "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']",
@@ -584,6 +588,16 @@ private
     option['data-selected'] == 'true' || selected?(label, option_value)
   end
 
+  def selected_option_value_or_raise(option:, label:, value:, allow_if_selected:)
+    return unless option['data-selected'] == 'true'
+
+    option_value = option["data-value"] || value
+    return unless selected?(label, option_value)
+    return option_value if allow_if_selected
+
+    raise "The '#{label || value}'-option is already selected"
+  end
+
   def click_target_element(click_target)
     unless click_target.visible?
       scope.page.execute_script(
@@ -621,11 +635,11 @@ private
     "#{options_selector} [data-class='select-option']"
   end
 
-  def select_value_and_close(label:, value:)
+  def select_value_and_close(label:, value:, allow_if_selected: false)
     previous_value = value
     debug_log { "open selector=#{base_selector}" }
     open
-    selected_value = select_option_value(label:, value:, wait_for_selection: false)
+    selected_value = select_option_value(label:, value:, wait_for_selection: false, **select_option_value_allow_args(allow_if_selected))
     debug_log do
       "select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
     end
@@ -655,10 +669,10 @@ private
     has_value_input = scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
     value_matches = current_value_matches?(value)
     blank_matches = blank_value_matches?(allow_blank)
-    return value_matches || blank_matches if has_value_input
+    label_matches = label && label_matches?(label)
+    return value_matches || label_matches || blank_matches if has_value_input
 
     selected_option_matches = selected_option_matches?(value)
-    label_matches = label && label_matches?(label)
     label_matches || value_matches || selected_option_matches || blank_matches
   end
 
@@ -678,6 +692,12 @@ private
 
   def blank_value_matches?(allow_blank)
     allow_blank && scope.page.has_selector?(current_value_selector(""), visible: false, wait: 0)
+  end
+
+  def select_option_value_allow_args(allow_if_selected)
+    return {} unless allow_if_selected
+
+    {allow_if_selected:}
   end
 
   # rubocop:enable Metrics/ClassLength, Style/Documentation
