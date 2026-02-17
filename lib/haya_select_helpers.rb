@@ -3,7 +3,7 @@ require "haya_select_helpers/version"
 require "haya_select_helpers/engine"
 
 module HayaSelectHelpers
-  def haya_select(id)
-    HayaSelect.new(id: id, scope: self)
+  def haya_select(id, debug: false)
+    HayaSelect.new(id: id, scope: self, debug:)
   end
 end
