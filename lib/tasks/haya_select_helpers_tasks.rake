@@ -22,6 +22,8 @@ namespace :release do
     gem_file = "haya_select_helpers-#{new_version}.gem"
     run_command("gem build haya_select_helpers.gemspec")
     run_command("gem push #{gem_file}")
+    File.delete(gem_file)
+    puts "Deleted local gem file: #{gem_file}"
   end
 
   def run_command(command)
