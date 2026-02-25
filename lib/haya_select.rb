@@ -345,7 +345,8 @@ private
   end
 
   def wait_for_option(selector)
-    wait_for_selector(selector, visible: :all)
+    wait_for_options_visible
+    wait_for_selector(selector)
   end
 
   def open_and_find_option_for(label:, value:)
@@ -559,6 +560,22 @@ private
 
   def option_label_selector
     "#{options_selector} [data-testid='option-presentation-text']"
+  end
+
+  def options_visibility_selector
+    "#{options_selector}[data-options-visibility]"
+  end
+
+  def options_visible_selector
+    "#{options_selector}[data-options-visibility='visible']"
+  end
+
+  def wait_for_options_visible
+    if scope.page.has_selector?(options_visibility_selector, visible: :all, wait: 0)
+      wait_for_selector(options_visible_selector, visible: :all)
+    else
+      wait_for_selector(options_selector, visible: :all)
+    end
   end
 
   def option_present?(selector, label)

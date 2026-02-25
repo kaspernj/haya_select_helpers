@@ -101,6 +101,61 @@ describe HayaSelect do
     end
   end
 
+  describe "#wait_for_option" do
+    it "waits for visible options before looking up option selector" do
+      scope = instance_double(HayaSelectSpecScope)
+      select = HayaSelect.new(id: "example", scope: scope)
+
+      expect(select).to receive(:wait_for_options_visible)
+      expect(scope).to receive(:wait_for_selector).with(
+        "[data-class='options-container'][data-id='example'] [data-class='select-option'][data-value='norway']"
+      )
+
+      select.__send__(
+        :wait_for_option,
+        "[data-class='options-container'][data-id='example'] [data-class='select-option'][data-value='norway']"
+      )
+    end
+  end
+
+  describe "#wait_for_options_visible" do
+    it "waits for explicit visible state when options visibility data is present" do
+      page = instance_double(Capybara::Session)
+      scope = instance_double(HayaSelectSpecScope, page: page)
+      select = HayaSelect.new(id: "example", scope: scope)
+
+      expect(page).to receive(:has_selector?).with(
+        "[data-class='options-container'][data-id='example'][data-options-visibility]",
+        visible: :all,
+        wait: 0
+      ).and_return(true)
+      expect(scope).to receive(:wait_for_selector).with(
+        "[data-class='options-container'][data-id='example'][data-options-visibility='visible']",
+        visible: :all
+      )
+
+      select.__send__(:wait_for_options_visible)
+    end
+
+    it "falls back to waiting for options container when visibility data is absent" do
+      page = instance_double(Capybara::Session)
+      scope = instance_double(HayaSelectSpecScope, page: page)
+      select = HayaSelect.new(id: "example", scope: scope)
+
+      expect(page).to receive(:has_selector?).with(
+        "[data-class='options-container'][data-id='example'][data-options-visibility]",
+        visible: :all,
+        wait: 0
+      ).and_return(false)
+      expect(scope).to receive(:wait_for_selector).with(
+        "[data-class='options-container'][data-id='example']",
+        visible: :all
+      )
+
+      select.__send__(:wait_for_options_visible)
+    end
+  end
+
   describe "#value_no_wait" do
     it "returns nil when the hidden input is missing" do
       page = instance_double(Capybara::Session)
