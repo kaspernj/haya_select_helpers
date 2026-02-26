@@ -36,7 +36,7 @@ class HayaSelect
   end
 
   def open(allow_if_open: false)
-    if scope.page.has_selector?(options_selector, visible: :all, wait: 0)
+    if select_open?
       return self if allow_if_open
 
       raise "Expected haya-select '#{base_selector}' to be closed, but it was already open"
@@ -47,12 +47,13 @@ class HayaSelect
     begin
       wait_for_selector("#{base_selector}[data-opened='false']", wait: 3)
       click_open_target_element
+      open_with_keyboard unless scope.page.has_selector?("#{base_selector}[data-opened='true']", wait: 0)
       wait_for_open
       self
-    rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+    rescue ApiMaker::SpecHelper::SelectorNotFoundError, WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       attempts += 1
       retry if attempts < 3
-      raise "Failed to open haya-select options for '#{base_selector}' (options container not found)"
+      raise
     end
   end
 
@@ -106,7 +107,7 @@ class HayaSelect
       selected_value, allow_blank = select_value_and_close(label:, value:, allow_if_selected:)
       wait_for_selected_after_select(label, value, selected_value, allow_blank)
       self
-    rescue WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
+    rescue ApiMaker::SpecHelper::SelectorNotFoundError, WaitUtil::TimeoutError, Selenium::WebDriver::Error::StaleElementReferenceError
       debug_log { "select retry selector=#{base_selector} attempts=#{attempts}" }
       attempts += 1
       retry if attempts < 3
@@ -199,7 +200,7 @@ class HayaSelect
       "select_option_value selector=#{base_selector} " \
         "option_selector=#{selector} label=#{label.inspect} value=#{value.inspect}"
     end
-    wait_for_option(selector)
+    wait_for_option(selector, label:)
     option = find_option_element(selector, label)
     debug_log do
       "option_element selector=#{base_selector} " \
@@ -338,13 +339,20 @@ private
     if value
       "#{select_option_container_selector}[data-value='#{value}']"
     else
-      selector = "#{options_selector} [data-testid='option-presentation']"
+      selector = option_presentation_selector
       selector << "[data-text='#{label}']" unless label.nil?
       selector
     end
   end
 
-  def wait_for_option(selector)
+  def wait_for_option(selector, label: nil)
+    wait_for_options_visible
+    wait_for_selector(selector)
+  rescue ApiMaker::SpecHelper::SelectorNotFoundError, WaitUtil::TimeoutError
+    raise unless label
+    raise unless scope.page.has_selector?(search_input_selector, wait: 0)
+
+    search_for_option(label)
     wait_for_options_visible
     wait_for_selector(selector)
   end
@@ -352,7 +360,7 @@ private
   def open_and_find_option_for(label:, value:)
     open
     selector = select_option_selector(label: label, value: value)
-    wait_for_option(selector)
+    wait_for_option(selector, label:)
     option = find_option_element(selector, label)
     option_value = option['data-value']
     [option, option_value]
@@ -426,18 +434,18 @@ private
   end
 
   def close_if_open
-    return if scope.page.has_no_selector?(options_selector, visible: :all, wait: 0)
+    return unless select_open?
 
     close_attempts = 0
 
-    while scope.page.has_selector?(options_selector, visible: :all, wait: 0) && close_attempts < 3
+    while select_open? && close_attempts < 3
       close_attempt
       break if wait_for_close?
 
       close_attempts += 1
     end
 
-    return if scope.page.has_no_selector?(options_selector, visible: :all, wait: 0)
+    return unless select_open?
 
     body = wait_for_and_find("body")
     body.send_keys(:escape)
@@ -448,7 +456,7 @@ private
   end
 
   def wait_for_close?
-    scope.page.has_no_selector?(options_selector, visible: :all, wait: 1)
+    scope.page.has_selector?("#{base_selector}[data-opened='false']", visible: :all, wait: 1)
   end
 
   def search_input_selector
@@ -473,12 +481,20 @@ private
     click_element_safely(element)
   end
 
+  def open_with_keyboard
+    target = scope.page.first(select_container_selector, minimum: 0)
+    target ||= scope.page.first(current_selected_selector, minimum: 0)
+    return unless target
+
+    target.send_keys(:enter)
+  end
+
   def current_selected_selector
     "#{base_selector} [data-class='current-selected']"
   end
 
   def wait_for_open
-    wait_for_selector(options_selector, visible: :all)
+    wait_for_selector("#{base_selector}[data-opened='true']", visible: :all)
   end
 
   def click_element_safely(element)
@@ -551,7 +567,7 @@ private
   end
 
   def no_options_selector
-    "#{options_selector} [data-class='no-options-container']"
+    "#{options_root_selector} [data-class='no-options-container']"
   end
 
   def select_container_selector
@@ -559,22 +575,24 @@ private
   end
 
   def option_label_selector
-    "#{options_selector} [data-testid='option-presentation-text']"
+    "#{options_root_selector} [data-testid='option-presentation-text']"
   end
 
   def options_visibility_selector
-    "#{options_selector}[data-options-visibility]"
+    "#{options_root_selector}[data-options-visibility]"
   end
 
   def options_visible_selector
-    "#{options_selector}[data-options-visibility='visible']"
+    "#{options_root_selector}[data-options-visibility='visible']"
   end
 
   def wait_for_options_visible
     if scope.page.has_selector?(options_visibility_selector, visible: :all, wait: 0)
       wait_for_selector(options_visible_selector, visible: :all)
+    elsif scope.page.has_selector?(options_root_selector, visible: :all, wait: 0)
+      wait_for_selector(options_root_selector, visible: :all)
     else
-      wait_for_selector(options_selector, visible: :all)
+      wait_for_selector("#{base_selector}[data-opened='true']", visible: :all)
     end
   end
 
@@ -649,13 +667,30 @@ private
   end
 
   def select_option_container_selector
-    "#{options_selector} [data-class='select-option']"
+    "#{options_root_selector} [data-class='select-option']"
+  end
+
+  def option_presentation_selector
+    "#{options_root_selector} [data-testid='option-presentation']"
+  end
+
+  def options_root_selector
+    if scope.page.has_selector?(options_selector, visible: :all, wait: 0)
+      options_selector
+    else
+      "#{base_selector}[data-opened='true']"
+    end
+  end
+
+  def select_open?
+    scope.page.has_selector?("#{base_selector}[data-opened='true']", visible: :all, wait: 0) ||
+      scope.page.has_selector?(options_selector, visible: :all, wait: 0)
   end
 
   def select_value_and_close(label:, value:, allow_if_selected: false)
     previous_value = value
     debug_log { "open selector=#{base_selector}" }
-    open
+    self.open(allow_if_open: true)
     selected_value = select_option_value(label:, value:, wait_for_selection: false, **select_option_value_allow_args(allow_if_selected))
     debug_log do
       "select_option_value selector=#{base_selector} selected_value=#{selected_value.inspect}"
