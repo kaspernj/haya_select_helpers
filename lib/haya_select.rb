@@ -337,7 +337,7 @@ private
 
   def select_option_selector(label:, value:)
     if value
-      "#{select_option_container_selector}[data-value='#{value}']"
+      select_option_container_selector(option_attributes: "[data-value='#{value}']")
     else
       selector = option_presentation_selector
       selector << "[data-text='#{label}']" unless label.nil?
@@ -494,7 +494,7 @@ private
   end
 
   def wait_for_open
-    wait_for_selector("#{base_selector}[data-opened='true']", visible: :all)
+    wait_for_selector(opened_base_selector, visible: :all)
   end
 
   def click_element_safely(element)
@@ -567,7 +567,7 @@ private
   end
 
   def no_options_selector
-    "#{options_root_selector} [data-class='no-options-container']"
+    options_root_descendant_selector("[data-class='no-options-container']")
   end
 
   def select_container_selector
@@ -575,15 +575,15 @@ private
   end
 
   def option_label_selector
-    "#{options_root_selector} [data-testid='option-presentation-text']"
+    options_root_descendant_selector("[data-testid='option-presentation-text']")
   end
 
   def options_visibility_selector
-    "#{options_root_selector}[data-options-visibility]"
+    options_root_attribute_selector("[data-options-visibility]")
   end
 
   def options_visible_selector
-    "#{options_root_selector}[data-options-visibility='visible']"
+    options_root_attribute_selector("[data-options-visibility='visible']")
   end
 
   def wait_for_options_visible
@@ -592,7 +592,7 @@ private
     elsif scope.page.has_selector?(options_root_selector, visible: :all, wait: 0)
       wait_for_selector(options_root_selector, visible: :all)
     else
-      wait_for_selector("#{base_selector}[data-opened='true']", visible: :all)
+      wait_for_selector(opened_base_selector, visible: :all)
     end
   end
 
@@ -666,24 +666,32 @@ private
     wait_for_selected_value_or_label(label, option_value) if wait_for_selection
   end
 
-  def select_option_container_selector
-    "#{options_root_selector} [data-class='select-option']"
+  def select_option_container_selector(option_attributes: "")
+    options_root_descendant_selector("[data-class='select-option']#{option_attributes}")
   end
 
   def option_presentation_selector
-    "#{options_root_selector} [data-testid='option-presentation']"
+    options_root_descendant_selector("[data-testid='option-presentation']")
   end
 
   def options_root_selector
-    if scope.page.has_selector?(options_selector, visible: :all, wait: 0)
-      options_selector
-    else
-      "#{base_selector}[data-opened='true']"
-    end
+    "#{options_selector}, #{opened_base_selector}"
+  end
+
+  def options_root_attribute_selector(attribute_selector)
+    "#{options_selector}#{attribute_selector}, #{opened_base_selector}#{attribute_selector}"
+  end
+
+  def options_root_descendant_selector(descendant_selector)
+    "#{options_selector} #{descendant_selector}, #{opened_base_selector} #{descendant_selector}"
+  end
+
+  def opened_base_selector
+    "#{base_selector}[data-opened='true']"
   end
 
   def select_open?
-    scope.page.has_selector?("#{base_selector}[data-opened='true']", visible: :all, wait: 0) ||
+    scope.page.has_selector?(opened_base_selector, visible: :all, wait: 0) ||
       scope.page.has_selector?(options_selector, visible: :all, wait: 0)
   end
 
@@ -736,7 +744,7 @@ private
     return false unless value
 
     scope.page.has_selector?(
-      "#{select_option_container_selector}[data-value='#{value}'][data-selected='true']",
+      select_option_container_selector(option_attributes: "[data-value='#{value}'][data-selected='true']"),
       visible: :all,
       wait: 0
     )

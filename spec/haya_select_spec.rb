@@ -50,7 +50,10 @@ describe HayaSelect do
       select = HayaSelect.new(id: "example", scope: scope)
       value_input_selector = "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] input[type='hidden']"
       current_value_selector = "[data-component='haya-select'][data-id='example'] [data-class='current-selected'] input[type='hidden'][value='norway']"
-      selected_option_selector = "[data-class='options-container'][data-id='example'] [data-class='select-option'][data-value='norway'][data-selected='true']"
+      selected_option_selector = "[data-class='options-container'][data-id='example'] " \
+        "[data-class='select-option'][data-value='norway'][data-selected='true'], " \
+        "[data-component='haya-select'][data-id='example'][data-opened='true'] " \
+        "[data-class='select-option'][data-value='norway'][data-selected='true']"
 
       expect(page).to receive(:has_selector?).with(value_input_selector, visible: false, wait: 0).and_return(false)
       expect(page).to receive(:has_selector?).with(current_value_selector, visible: false, wait: 0).and_return(false)
@@ -123,14 +126,18 @@ describe HayaSelect do
       page = instance_double(Capybara::Session)
       scope = instance_double(HayaSelectSpecScope, page: page)
       select = HayaSelect.new(id: "example", scope: scope)
+      options_visibility_selector = "[data-class='options-container'][data-id='example'][data-options-visibility], " \
+        "[data-component='haya-select'][data-id='example'][data-opened='true'][data-options-visibility]"
+      options_visible_selector = "[data-class='options-container'][data-id='example'][data-options-visibility='visible'], " \
+        "[data-component='haya-select'][data-id='example'][data-opened='true'][data-options-visibility='visible']"
 
       expect(page).to receive(:has_selector?).with(
-        "[data-class='options-container'][data-id='example'][data-options-visibility]",
+        options_visibility_selector,
         visible: :all,
         wait: 0
       ).and_return(true)
       expect(scope).to receive(:wait_for_selector).with(
-        "[data-class='options-container'][data-id='example'][data-options-visibility='visible']",
+        options_visible_selector,
         visible: :all
       )
 
@@ -141,14 +148,23 @@ describe HayaSelect do
       page = instance_double(Capybara::Session)
       scope = instance_double(HayaSelectSpecScope, page: page)
       select = HayaSelect.new(id: "example", scope: scope)
+      options_visibility_selector = "[data-class='options-container'][data-id='example'][data-options-visibility], " \
+        "[data-component='haya-select'][data-id='example'][data-opened='true'][data-options-visibility]"
+      options_root_selector = "[data-class='options-container'][data-id='example'], " \
+        "[data-component='haya-select'][data-id='example'][data-opened='true']"
 
       expect(page).to receive(:has_selector?).with(
-        "[data-class='options-container'][data-id='example'][data-options-visibility]",
+        options_visibility_selector,
         visible: :all,
         wait: 0
       ).and_return(false)
+      expect(page).to receive(:has_selector?).with(
+        options_root_selector,
+        visible: :all,
+        wait: 0
+      ).and_return(true)
       expect(scope).to receive(:wait_for_selector).with(
-        "[data-class='options-container'][data-id='example']",
+        options_root_selector,
         visible: :all
       )
 
