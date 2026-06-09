@@ -1,19 +1,13 @@
 import React, {useEffect, useState} from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
-import HayaSelectV092 from "haya-select-v092/build/select";
-import HayaSelectV094 from "haya-select-v094/build/select";
-import HayaSelectV096 from "haya-select-v096/build/select";
+import HayaSelect from "haya-select/build/select";
 import OutsideEyeProvider from "outside-eye/build/provider";
-import versionV092 from "haya-select-v092/package.json";
-import versionV094 from "haya-select-v094/package.json";
-import versionV096 from "haya-select-v096/package.json";
+import hayaSelectPackage from "haya-select/package.json";
 
 const routes = [
-  { path: "/haya-select/v092", label: "haya-select 1.0.92", version: versionV092.version, component: HayaSelectV092, id: "fruit_select_v092" },
-  { path: "/haya-select/v094", label: "haya-select 1.0.94", version: versionV094.version, component: HayaSelectV094, id: "fruit_select_v094" },
-  { path: "/haya-select/v096", label: "haya-select 1.0.96", version: versionV096.version, component: HayaSelectV096, id: "fruit_select_v096" },
-  { path: "/haya-select/v096-delayed", label: "haya-select 1.0.96 delayed", version: versionV096.version, component: HayaSelectV096, id: "fruit_select_v096_delayed", delayedMount: true }
+  { path: "/haya-select", label: "haya-select", version: hayaSelectPackage.version, component: HayaSelect, id: "fruit_select" },
+  { path: "/haya-select/delayed", label: "haya-select delayed", version: hayaSelectPackage.version, component: HayaSelect, id: "fruit_select_delayed", delayedMount: true }
 ];
 
 function Header() {
