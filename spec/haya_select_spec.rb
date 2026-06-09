@@ -7,6 +7,9 @@ class HayaSelectSpecScope
 end
 
 describe HayaSelect do
+  let(:base) { "[data-component='haya-select'][data-id='example']" }
+  let(:options_container) { "[data-testid='haya-select/options-container'][data-id='example']" }
+
   describe "#label_matches?" do
     it "matches by option data-text when rendered text differs" do
       page = instance_double(Capybara::Session)
@@ -14,7 +17,7 @@ describe HayaSelect do
       select = HayaSelect.new(id: "example", scope: scope)
 
       expect(page).to receive(:has_selector?).with(
-        "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] [data-testid='haya-select/option-presentation'][data-text='Denmark +45']",
+        "#{base} [data-testid='haya-select/current-selected'] [data-testid='haya-select/option-presentation'][data-text='Denmark +45']",
         wait: 0
       ).and_return(true)
 
@@ -28,8 +31,8 @@ describe HayaSelect do
       page = instance_double(Capybara::Session)
       scope = instance_double(HayaSelectSpecScope, page: page)
       select = HayaSelect.new(id: "example", scope: scope)
-      value_input_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden']"
-      current_value_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
+      value_input_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden']"
+      current_value_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
 
       expect(page).to receive(:has_selector?).with(value_input_selector, visible: false, wait: 0).and_return(true)
       expect(page).to receive(:has_selector?).with(current_value_selector, visible: false, wait: 0).and_return(false)
@@ -48,9 +51,9 @@ describe HayaSelect do
       page = instance_double(Capybara::Session)
       scope = instance_double(HayaSelectSpecScope, page: page)
       select = HayaSelect.new(id: "example", scope: scope)
-      value_input_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden']"
-      current_value_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
-      selected_option_selector = "[data-testid='haya-select/options-container'][data-id='example'] [data-testid='haya-select/option'][data-value='norway'][data-selected='true']"
+      value_input_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden']"
+      current_value_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
+      selected_option_selector = "#{options_container} [data-testid='haya-select/option'][data-value='norway'][data-selected='true']"
 
       expect(page).to receive(:has_selector?).with(value_input_selector, visible: false, wait: 0).and_return(false)
       expect(page).to receive(:has_selector?).with(current_value_selector, visible: false, wait: 0).and_return(false)
@@ -70,8 +73,8 @@ describe HayaSelect do
   describe "#wait_for_selected_value_or_label" do
     it "uses wait_for_selector for hidden input value when hidden input is mounted" do
       page = instance_double(Capybara::Session)
-      value_input_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden']"
-      current_value_selector = "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
+      value_input_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden']"
+      current_value_selector = "#{base} [data-testid='haya-select/current-selected'] input[type='hidden'][value='norway']"
       scope = instance_double(HayaSelectSpecScope, page: page)
       select = HayaSelect.new(id: "example", scope: scope)
 
@@ -108,12 +111,12 @@ describe HayaSelect do
 
       expect(select).to receive(:wait_for_options_visible)
       expect(scope).to receive(:wait_for_selector).with(
-        "[data-testid='haya-select/options-container'][data-id='example'] [data-testid='haya-select/option'][data-value='norway']"
+        "#{options_container} [data-testid='haya-select/option'][data-value='norway']"
       )
 
       select.__send__(
         :wait_for_option,
-        "[data-testid='haya-select/options-container'][data-id='example'] [data-testid='haya-select/option'][data-value='norway']"
+        "#{options_container} [data-testid='haya-select/option'][data-value='norway']"
       )
     end
   end
@@ -162,7 +165,7 @@ describe HayaSelect do
       scope = instance_double(HayaSelectSpecScope, page: page)
 
       expect(page).to receive(:first).with(
-        "[data-component='haya-select'][data-id='example'] [data-testid='haya-select/current-selected'] input[type='hidden']",
+        "#{base} [data-testid='haya-select/current-selected'] input[type='hidden']",
         minimum: 0,
         visible: false,
         wait: 0
