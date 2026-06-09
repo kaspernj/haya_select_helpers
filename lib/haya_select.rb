@@ -23,14 +23,14 @@ class HayaSelect
   def initialize(id:, scope:, debug: false)
     @base_selector = "[data-component='haya-select'][data-id='#{id}']"
     @debug = debug
-    @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] [data-class='current-selected']"
-    @opened_current_selected_selector = "#{base_selector}[data-opened='true'] [data-class='current-selected']"
-    @options_selector = "[data-class='options-container'][data-id='#{id}']"
+    @not_opened_current_selected_selector = "#{base_selector}[data-opened='false'] [data-testid='haya-select/current-selected']"
+    @opened_current_selected_selector = "#{base_selector}[data-opened='true'] [data-testid='haya-select/current-selected']"
+    @options_selector = "[data-testid='haya-select/options-container'][data-id='#{id}']"
     @scope = scope
   end
 
   def label
-    wait_for_and_find("#{base_selector} [data-class='current-selected'] [data-class='current-option']").text
+    wait_for_and_find("#{base_selector} [data-testid='haya-select/current-selected'] [data-testid='haya-select/current-option']").text
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -58,13 +58,13 @@ class HayaSelect
 
   def close
     wait_for_selector opened_current_selected_selector
-    wait_for_and_find("[data-class='search-text-input']").click
+    wait_for_and_find("[data-testid='haya-select/search-input']").click
     wait_for_no_selector opened_current_selected_selector
   end
 
   def options
-    wait_for_selector "#{options_selector} [data-class='select-option']"
-    option_elements = all("#{options_selector} [data-class='select-option']")
+    wait_for_selector "#{options_selector} [data-testid='haya-select/option']"
+    option_elements = all("#{options_selector} [data-testid='haya-select/option']")
     option_elements.map do |option_element|
       {
         label: option_element.text,
@@ -83,7 +83,7 @@ class HayaSelect
   end
 
   def search(value)
-    search_input = wait_for_and_find("#{base_selector} [data-class='search-text-input']")
+    search_input = wait_for_and_find("#{base_selector} [data-testid='haya-select/search-input']")
     search_input.set("")
     search_input.send_keys(value)
     self
@@ -129,7 +129,7 @@ class HayaSelect
 
     begin
       option = scope.page.first(
-        "#{options_selector} [data-class='select-option'][data-value='#{value}']",
+        "#{options_selector} [data-testid='haya-select/option'][data-value='#{value}']",
         minimum: 0,
         wait: 0
       )
@@ -141,7 +141,7 @@ class HayaSelect
 
   def value_no_wait
     hidden_input = scope.page.first(
-      "#{base_selector} [data-class='current-selected'] input[type='hidden']",
+      "#{base_selector} [data-testid='haya-select/current-selected'] input[type='hidden']",
       minimum: 0,
       visible: false,
       wait: 0
@@ -152,14 +152,14 @@ class HayaSelect
 
   def label_no_wait
     current_option = scope.page.first(
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']",
+      "#{base_selector} [data-testid='haya-select/current-selected'] [data-testid='haya-select/current-option']",
       minimum: 0,
       wait: 0
     )
 
     return nil unless current_option
 
-    option_text = current_option.first("[data-testid='option-presentation-text']", minimum: 0)
+    option_text = current_option.first("[data-testid='haya-select/option-presentation-text']", minimum: 0)
     option_text ? option_text.text : current_option.text
   end
 
@@ -227,7 +227,7 @@ class HayaSelect
   end
 
   def value
-    wait_for_and_find("#{base_selector} [data-class='current-selected'] input[type='hidden']", visible: false)[:value]
+    wait_for_and_find("#{base_selector} [data-testid='haya-select/current-selected'] input[type='hidden']", visible: false)[:value]
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -240,7 +240,7 @@ class HayaSelect
   end
 
   def toggles
-    all("#{base_selector} [data-testid='option-presentation']").map do |element|
+    all("#{base_selector} [data-testid='haya-select/option-presentation']").map do |element|
       {
         toggle_icon: element['data-toggle-icon'],
         toggle_value: element['data-toggle-value'],
@@ -252,7 +252,7 @@ class HayaSelect
   end
 
   def selected_option_values
-    all("[data-class='select-option'][data-selected='true']").map do |select_option_element|
+    all("[data-testid='haya-select/option'][data-selected='true']").map do |select_option_element|
       select_option_element['data-value']
     end
   end
@@ -283,7 +283,7 @@ class HayaSelect
 
   def wait_for_value(expected_value)
     wait_for_selector(
-      "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{expected_value}']",
+      "#{base_selector} [data-testid='haya-select/current-selected'] input[type='hidden'][value='#{expected_value}']",
       visible: false
     )
     self
@@ -338,7 +338,7 @@ private
     if value
       "#{select_option_container_selector}[data-value='#{value}']"
     else
-      selector = "#{options_selector} [data-testid='option-presentation']"
+      selector = "#{options_selector} [data-testid='haya-select/option-presentation']"
       selector << "[data-text='#{label}']" unless label.nil?
       selector
     end
@@ -362,11 +362,11 @@ private
     click_option_element(option)
     return unless option_selected?(option, label, option_value)
 
-    option_text = option.first("[data-testid='option-presentation-text']", minimum: 0)
+    option_text = option.first("[data-testid='haya-select/option-presentation-text']", minimum: 0)
     click_option_element(option_text) if option_text
     return unless option_selected?(option, label, option_value)
 
-    option_presentation = option.all("[data-testid='option-presentation']", minimum: 0).first
+    option_presentation = option.all("[data-testid='haya-select/option-presentation']", minimum: 0).first
     click_option_element(option_presentation) if option_presentation
     return unless option_selected?(option, label, option_value)
 
@@ -374,7 +374,7 @@ private
   end
 
   def wait_for_selected_value_or_label(label, value, allow_blank: false)
-    value_input_selector = "#{base_selector} [data-class='current-selected'] input[type='hidden']"
+    value_input_selector = "#{base_selector} [data-testid='haya-select/current-selected'] input[type='hidden']"
 
     if scope.page.has_selector?(value_input_selector, visible: false, wait: 0)
       return wait_for_selector(current_value_selector(value), visible: false) if value
@@ -452,7 +452,7 @@ private
   end
 
   def search_input_selector
-    "#{base_selector} [data-class='search-text-input']"
+    "#{base_selector} [data-testid='haya-select/search-input']"
   end
 
   def click_open_target_element
@@ -474,7 +474,7 @@ private
   end
 
   def current_selected_selector
-    "#{base_selector} [data-class='current-selected']"
+    "#{base_selector} [data-testid='haya-select/current-selected']"
   end
 
   def wait_for_open
@@ -529,15 +529,15 @@ private
 
   def current_option_label_selectors
     [
-      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation-text']",
-      "#{base_selector} [data-class='current-selected'] [data-class='current-option']"
+      "#{base_selector} [data-testid='haya-select/current-selected'] [data-testid='haya-select/option-presentation-text']",
+      "#{base_selector} [data-testid='haya-select/current-selected'] [data-testid='haya-select/current-option']"
     ]
   end
 
   def label_matches?(label)
     return false unless label
     return true if scope.page.has_selector?(
-      "#{base_selector} [data-class='current-selected'] [data-testid='option-presentation'][data-text='#{label}']",
+      "#{base_selector} [data-testid='haya-select/current-selected'] [data-testid='haya-select/option-presentation'][data-text='#{label}']",
       wait: 0
     )
 
@@ -547,19 +547,19 @@ private
   end
 
   def current_value_selector(value)
-    "#{base_selector} [data-class='current-selected'] input[type='hidden'][value='#{value}']"
+    "#{base_selector} [data-testid='haya-select/current-selected'] input[type='hidden'][value='#{value}']"
   end
 
   def no_options_selector
-    "#{options_selector} [data-class='no-options-container']"
+    "#{options_selector} [data-testid='haya-select/no-options-container']"
   end
 
   def select_container_selector
-    "#{base_selector} [data-class='select-container']"
+    "#{base_selector} [data-testid='haya-select/select-container']"
   end
 
   def option_label_selector
-    "#{options_selector} [data-testid='option-presentation-text']"
+    "#{options_selector} [data-testid='haya-select/option-presentation-text']"
   end
 
   def options_visibility_selector
@@ -590,13 +590,13 @@ private
 
     if selector.include?("option-presentation")
       option_presentation = wait_for_and_find(selector)
-      return option_presentation.find(:xpath, "./ancestor::*[@data-class='select-option']")
+      return option_presentation.find(:xpath, "./ancestor::*[@data-testid='haya-select/option']")
     end
 
     return wait_for_and_find(selector) if scope.page.has_selector?(selector, wait: 0)
 
     option_text = wait_for_and_find(option_label_selector, text: label)
-    option_text.find(:xpath, "./ancestor::*[@data-class='select-option']")
+    option_text.find(:xpath, "./ancestor::*[@data-testid='haya-select/option']")
   rescue Selenium::WebDriver::Error::StaleElementReferenceError
     retry
   end
@@ -649,7 +649,7 @@ private
   end
 
   def select_option_container_selector
-    "#{options_selector} [data-class='select-option']"
+    "#{options_selector} [data-testid='haya-select/option']"
   end
 
   def select_value_and_close(label:, value:, allow_if_selected: false)
