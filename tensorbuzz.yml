@@ -1,0 +1,31 @@
+rvm: true
+builds:
+  rubocop:
+    name: Rubocop
+    paths:
+      - "**/*.rb"
+      - Gemfile
+      - Gemfile.lock
+      - Rakefile
+      - haya_select_helpers.gemspec
+      - peak_flow.yml
+      - tensorbuzz.yml
+    script:
+      - bundle exec rubocop
+  system_tests:
+    name: System tests
+    paths:
+      - app/**
+      - config/**
+      - lib/**
+      - spec/**
+      - Gemfile
+      - Gemfile.lock
+      - Rakefile
+      - haya_select_helpers.gemspec
+      - peak_flow.yml
+      - tensorbuzz.yml
+    script:
+      - cd spec/dummy && npm install --legacy-peer-deps
+      - cd spec/dummy && npm run build:test
+      - bundle exec rspec
