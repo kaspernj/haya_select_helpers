@@ -8,6 +8,9 @@ builds:
       - Gemfile.lock
       - Rakefile
       - haya_select_helpers.gemspec
+      - .rubocop.yml
+      - .rubocop_todo.yml
+      - .ruby-version
       - peak_flow.yml
       - tensorbuzz.yml
     script:
@@ -23,6 +26,8 @@ builds:
       - Gemfile.lock
       - Rakefile
       - haya_select_helpers.gemspec
+      - .rspec
+      - .ruby-version
       - peak_flow.yml
       - tensorbuzz.yml
     script:
