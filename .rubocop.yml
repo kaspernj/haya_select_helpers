@@ -159,6 +159,8 @@ RSpec/LetSetup:
 RSpec/MultipleMemoizedHelpers:
   Max: 20
 
+# Keep this root configuration change visible to the RuboCop lane.
+
 RSpec/MessageSpies:
   Enabled: false
 
